@@ -154,6 +154,29 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 .err{color:var(--bad-t);font-size:14px;margin-top:10px}
 .skel{color:transparent!important;background:linear-gradient(90deg,var(--line),transparent,var(--line));background-size:200% 100%;animation:sk 1.2s linear infinite;border-radius:6px}
 @keyframes sk{to{background-position:-200% 0}}
+.per{display:flex;gap:6px;margin-top:10px}
+.per button{appearance:none;border:0;background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);font-size:12px;padding:4px 11px;border-radius:999px;cursor:pointer}
+.per button.on{background:#fff;color:#0d366b;font-weight:700}
+.strip{margin-top:8px}
+.tabbar button{position:relative}
+.badge{position:absolute;top:0;left:calc(50% + 5px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+.badge[hidden]{display:none}
+.need{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.35}
+.need:first-child{border-top:0;padding-top:4px}
+.need .ic{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;margin-top:-1px}
+.ic.ok{background:var(--ok);color:#fff}.ic.todo{background:var(--warn);color:#3a2a00}
+.need small{display:block;color:var(--ink3);font-size:13px;margin-top:2px}
+.more{appearance:none;border:1px solid var(--line);background:none;border-radius:10px;padding:9px;width:100%;margin-top:10px;font-size:14px;font-weight:600;color:var(--ink2);cursor:pointer}
+.search{width:100%;border:1px solid var(--line);background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2386847c' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5.5'/%3E%3Cpath d='M11 11l4 4'/%3E%3C/svg%3E") no-repeat 12px center;border-radius:10px;padding:10px 12px 10px 36px;font-size:16px;color:var(--ink);margin-bottom:8px;-webkit-appearance:none}
+.it[data-id]{cursor:pointer}
+.it[data-id] .it-v::after{content:" ›";color:var(--ink3);font-weight:400}
+.sheet-bg{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;animation:fd .15s ease}
+.sheet{background:var(--card);width:100%;max-width:720px;margin:0 auto;max-height:86vh;overflow:auto;border-radius:20px 20px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom));animation:up .2s ease}
+@keyframes fd{from{opacity:0}}@keyframes up{from{transform:translateY(40px)}}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.xbtn{appearance:none;border:0;background:var(--line);color:var(--ink);width:32px;height:32px;border-radius:50%;font-size:15px;cursor:pointer;flex:none}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.kv span{color:var(--ink2);flex:none}.kv b{text-align:right;font-weight:600;word-break:break-word}
 </style>
 </head>
 <body>
@@ -167,7 +190,8 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
     <button class="ibtn" id="btn-refresh" aria-label="Actualiser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
     <button class="ibtn" id="btn-setup" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
-  <div class="strip" aria-label="Où j'en suis sur l'année">
+  <div class="per" id="per" role="tablist" aria-label="Période du bandeau"><button data-per="annee">Année</button><button data-per="tri">Trimestre</button><button data-per="mois">Mois</button></div>
+  <div class="strip" aria-label="Où j'en suis">
     <div class="chip"><div class="chip-l"><i style="background:#6da7ec"></i>MTE</div><div class="chip-v" id="s-mt">—</div><div class="bar"><div id="sb-mt"></div></div></div>
     <div class="chip"><div class="chip-l"><i style="background:#f59a6c"></i>Achat</div><div class="chip-v" id="s-achat">—</div><div class="bar"><div id="sb-achat"></div></div></div>
     <div class="chip"><div class="chip-l"><i style="background:#5fd3a6"></i>Points</div><div class="chip-v" id="s-points">—</div><div class="bar"><div id="sb-points"></div></div></div>
@@ -257,7 +281,9 @@ function parse(raw) {
         metier: txt(r[4]) || 'Non renseigné', type_client: txt(r[5]) || 'Non renseigné', lead_grc: txt(r[6]) || 'Non',
         statut: txt(r[8]) || 'Non renseigné',
         achat: num(r[9]), mte: num(r[12]), commission_base: num(r[14]), commission: num(r[15]), points: num(r[16]),
-        administre: txt(r[19]).toLowerCase() === 'oui'
+        administre: txt(r[19]).toLowerCase() === 'oui', admin_txt: txt(r[19]),
+        nouveau: txt(r[2]), projet: txt(r[3]), produit: txt(r[7]), ca_hard: r[10], marge_hard: r[11], marge_new: r[13],
+        quantite: r[17], challenge: r[18], commentaire: txt(r[20]), mrm_choix: txt(r[21]), delta: r[22], mrm_base: r[23]
       });
     }
     const g = (row, col) => num((rows[row - 1] || [])[col]);
@@ -349,7 +375,8 @@ function compute(raw) {
 
 /* ---------- État ---------- */
 const nowMois = CAL[new Date().getMonth()];
-const S = {tab: 'resume', metric: 'mt', tri: TRI[nowMois] || 'T1', moisPrev: nowMois, sel: -1, pType: '', pTri: '', aMois: '', aStatut: '', aMin: 0, aTri: 'saisie', aAdmin: ''};
+const S = {tab: 'resume', metric: 'mt', tri: TRI[nowMois] || 'T1', moisPrev: nowMois, sel: -1, pType: '', pTri: '', aMois: '', aStatut: '', aMin: 0, aTri: 'saisie', aAdmin: '', per: 'annee', more: {}, q: ''};
+try { S.per = localStorage.getItem('kpi_per') || 'annee'; } catch (e) {}
 try { S.tab = sessionStorage.getItem('kpi_tab') || 'resume'; } catch (e) {}
 let D = null, RAW = null, lastFetch = 0, loading = false;
 
@@ -357,15 +384,75 @@ let D = null, RAW = null, lastFetch = 0, loading = false;
 const accent = {mt: 'var(--c-mte)', achat: 'var(--c-achat)', points: 'var(--c-pts)'};
 const fmtK = (k, v) => (k === 'points' ? fN.format(v) + ' pts' : fE.format(v));
 
+const MOIS_COURT = {Janvier:'Janv.',Février:'Févr.',Mars:'Mars',Avril:'Avril',Mai:'Mai',Juin:'Juin',Juillet:'Juil.',Août:'Août',Septembre:'Sept.',Octobre:'Oct.',Novembre:'Nov.',Décembre:'Déc.'};
+function moisRow() {
+  const k = nowMois === 'Juillet' || nowMois === 'Août' ? 'Juillet + Août' : nowMois;
+  return D.mensuel.find((r) => r.mois === k) || {mois: k, mt: 0, obj_mt: 0, achat: 0, obj_achat: 0, points: 0, obj_points: 0};
+}
+function curTri() { return D.trim.find((x) => x.trimestre === TRI[nowMois]) || D.trim[0] || {}; }
 function renderStrip() {
-  const c = D && D.cumul;
-  [['mt','pct_mt'],['achat','pct_achat'],['points','pct_points']].forEach(([k, f]) => {
-    const v = $('s-' + k), b = $('sb-' + k);
-    if (!c) { v.textContent = '—'; b.style.width = '0'; return; }
-    v.textContent = pct(c[f]);
-    b.style.width = Math.min(100, c[f] * 100) + '%';
-    b.className = tone(c[f]);
+  const per = $('per');
+  per.querySelectorAll('button').forEach((b) => {
+    b.classList.toggle('on', b.dataset.per === S.per);
+    b.textContent = b.dataset.per === 'annee' ? 'Année' : b.dataset.per === 'tri' ? 'Trimestre ' + (TRI[nowMois] || '') : MOIS_COURT[nowMois] || nowMois;
   });
+  let v = null;
+  if (D) {
+    if (S.per === 'tri') { const t = curTri(); v = {mt: t.pct_mt || 0, achat: t.pct_achat || 0, points: t.pct_points || 0}; }
+    else if (S.per === 'mois') { const r = moisRow(); v = {mt: r.obj_mt ? r.mt / r.obj_mt : 0, achat: r.obj_achat ? r.achat / r.obj_achat : 0, points: r.obj_points ? r.points / r.obj_points : 0}; }
+    else v = {mt: D.cumul.pct_mt, achat: D.cumul.pct_achat, points: D.cumul.pct_points};
+  }
+  ['mt','achat','points'].forEach((k) => {
+    const el = $('s-' + k), b = $('sb-' + k);
+    if (!v) { el.textContent = '—'; b.style.width = '0'; return; }
+    el.textContent = pct(v[k]);
+    b.style.width = Math.min(100, v[k] * 100) + '%';
+    b.className = tone(v[k]);
+  });
+  const tb = document.querySelector('.tabbar [data-tab="affaires"]');
+  let bd = tb.querySelector('.badge');
+  if (!bd) { bd = document.createElement('span'); bd.className = 'badge'; tb.appendChild(bd); }
+  const n = D ? D.admin.nb : 0;
+  bd.textContent = n > 99 ? '99+' : String(n);
+  bd.hidden = !n;
+  bd.setAttribute('aria-label', n + ' dossier' + (n > 1 ? 's' : '') + ' à administrer');
+}
+function miniRow(label, v, obj, k) {
+  const p = obj ? v / obj : 0;
+  return `<div><div class="row"><span>${label}</span><b class="${obj ? tone(p) + '-t' : ''}">${obj ? pct(p) : '—'}</b></div>
+    <div class="row"><span class="meta" style="margin:0">${fmtK(k, v)} sur ${fmtK(k, obj)}</span></div>
+    <div class="bar"><div class="${tone(p)}-bg" style="width:${Math.min(100, p * 100)}%"></div></div></div>`;
+}
+function bdcInfo(mois) {
+  const l = D.affaires.filter((a) => a.mois === mois && num(a.signature) >= 1 && a.mte >= 1000);
+  const md = D.mois_detail.find((x) => x.mois === mois) || {};
+  const montant = MOIS.indexOf(mois) >= MOIS.indexOf('Novembre') ? 250 : 200;
+  const prime = md.prime_bdc || (l.length >= 5 ? montant : 0);
+  return {nb: l.length, montant, prime, txt: prime ? `✓ ${fE.format(prime)} (${l.length}/5)` : `${l.length}/5 · encore ${5 - l.length} pour ${fE.format(montant)}`};
+}
+function besoins(t, md) {
+  const out = [];
+  const eur = (lbl, v, o, taux, prime, prev) => {
+    if (!o) return;
+    if (v >= o) out.push({ok: true, h: `Prime ${lbl} débloquée : <b>${fE.format(prime)}</b>`, s: `${pct(v / o)} de l'objectif du trimestre`});
+    else out.push({ok: false, h: `Encore <b>${fE.format(o - v)}</b> ${lbl === 'MTE' ? 'de MTE' : "d'achat"} pour la prime ${lbl}`, s: `Au moins ${fE.format(o * taux)} à la clé` + (prev >= o - v ? ' · ta prév. du mois suffirait' : prev ? ` · ta prév. du mois : ${fE.format(prev)}` : '')});
+  };
+  eur('MTE', t.mt, t.obj_mt, 0.02, t.prime_mt, md.prev_mt || 0);
+  eur('achat', t.achat, t.obj_achat, 0.015, t.prime_achat, md.prev_achat || 0);
+  if (t.obj_points) {
+    const p = t.points / t.obj_points, prev = md.prev_points || 0;
+    const fin = (g) => (prev >= g ? ' · ta prév. du mois suffirait' : prev ? ` · ta prév. du mois : ${fN.format(prev)} pts` : '');
+    if (p < 0.8) { const g = 0.8 * t.obj_points - t.points; out.push({ok: false, h: `Encore <b>${fN.format(g)} pts</b> pour atteindre 80 % des points`, s: 'La prime points démarre à 80 % (versée à 60 %)' + fin(g)}); }
+    else if (p < 1) { const g = t.obj_points - t.points; out.push({ok: false, h: `Encore <b>${fN.format(g)} pts</b> pour atteindre 100 % des points`, s: `Tu es à ${pct(p)} : la prime monte à 100 % à l'objectif` + fin(g)}); }
+    else out.push({ok: true, h: `Points à <b>${pct(p)}</b> : prime ${fE.format(t.prime_points)}`, s: p < 1.5 ? `Encore ${fN.format(1.5 * t.obj_points - t.points)} pts pour le maximum (versée à 200 %)` : 'Maximum atteint (versée à 200 %)'});
+  }
+  return out;
+}
+function capped(key, arr, n, render) {
+  const all = !!S.more[key];
+  let h = (all ? arr : arr.slice(0, n)).map(render).join('');
+  if (arr.length > n) h += `<button class="more" data-more="${key}">${all ? 'Voir moins' : 'Voir plus (' + (arr.length - n) + ')'}</button>`;
+  return h;
 }
 
 function objCard(k, label, val, obj, p, unit) {
@@ -385,7 +472,27 @@ function renderResume() {
     <div class="row"><span class="meta" style="margin:0">${fmtK(k, v)} sur ${fmtK(k, obj)}</span></div>
     <div class="bar"><div class="${t.vide ? '' : tone(p) + '-bg'}" style="width:${t.vide ? 0 : Math.min(100, p * 100)}%"></div></div></div>`;
   const r = D.ratios;
+  const mr = moisRow(), md = D.mois_detail.find((x) => x.mois === nowMois) || {}, bdc = bdcInfo(nowMois);
+  const tc = curTri(), bes = besoins(tc, md);
   el.innerHTML = `
+    <div class="card hero soft" style="--a:var(--c-mte)">
+      <div class="row" style="align-items:center"><span class="lab" style="font-weight:600;color:var(--ink)">Ce mois-ci · ${esc(mr.mois)}</span><button class="link" style="margin:0" data-goto="prev">Détail →</button></div>
+      <div class="mini" style="margin-top:12px">
+        ${miniRow('MTE signée', mr.mt, mr.obj_mt, 'mt')}
+        ${miniRow('Achat', mr.achat, mr.obj_achat, 'achat')}
+        ${miniRow('Points', mr.points, mr.obj_points, 'points')}
+      </div>
+      <div class="plist" style="margin-top:12px">
+        <div class="row"><span>MTE en prévision (80–99 %)</span><b>${fE.format(md.prev_mt || 0)}</b></div>
+        <div class="row"><span>Potentiel fin de mois</span><b>${fE.format(md.pot_mt || 0)}</b></div>
+        <div class="row"><span>Prime BDC</span><b>${bdc.txt}</b></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="h2">Primes du ${esc(tc.trimestre || '')} : ce qu'il te manque</h2>
+      <p class="sub">Calculé sur le signé à 100 % du trimestre en cours.</p>
+      <div>${bes.map((b) => `<div class="need"><span class="ic ${b.ok ? 'ok' : 'todo'}">${b.ok ? '✓' : '!'}</span><div>${b.h}<small>${b.s}</small></div></div>`).join('')}</div>
+    </div>
     <p class="lead">Cumul avril → <b>${esc((c.dernier || '—').toLowerCase())}</b> : <b>${pct(c.pct_mt)}</b> de ton objectif annuel de MTE et <b>${fE.format(c.primes)}</b> de primes trimestrielles.</p>
     <div>
       <p class="grp">Mes objectifs de l'année</p>
@@ -505,7 +612,7 @@ function affItem(a, right) {
   const signe = num(a.signature) >= 1;
   const st = signe ? (a.administre ? 'ok-t' : 'warn-t') : a.statut === 'Gagné' ? 'ok-t' : a.statut === 'Perdu' ? 'bad-t' : 'warn-t';
   const lab = signe ? (a.administre ? 'Administré' : 'À administrer') : a.statut;
-  return `<div class="it">
+  return `<div class="it" data-id="${esc(a.id)}" role="button" tabindex="0">
     <div class="it-c">${esc(a.client)}</div><div class="it-v">${fE.format(a.mte)}</div>
     <div class="it-m">${esc(a.mois)} · ${esc(a.metier)} · ${a.signature == null ? '—' : pct(a.signature)}<span class="pill ${st}">${esc(lab)}</span></div>
     <div class="it-s">${right || ''}</div>
@@ -520,7 +627,8 @@ function renderPrev() {
   const signes = l.filter((a) => num(a.signature) >= 1);
   const sAdm = signes.filter((a) => a.administre), sNon = signes.filter((a) => !a.administre);
   const detail = (a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''));
-  const sous = (titre, list, vide) => `<p class="grp" style="margin:14px 0 2px">${titre} · ${list.length}</p><div class="items">${list.length ? list.map(detail).join('') : '<div class="empty">' + vide + '</div>'}</div>`;
+  const sous = (titre, key, list, vide) => `<p class="grp" style="margin:14px 0 2px">${titre} · ${list.length}</p><div class="items">${list.length ? capped(key, list, 5, detail) : '<div class="empty">' + vide + '</div>'}</div>`;
+  const bdc = bdcInfo(S.moisPrev);
   const prev = l.filter((a) => num(a.signature) >= 0.8 && num(a.signature) < 1);
   const loin = l.filter((a) => a.statut === 'En cours' && num(a.signature) < 0.8).sort((a, b) => num(b.signature) - num(a.signature));
   el.innerHTML = `
@@ -533,6 +641,7 @@ function renderPrev() {
       <span class="lab">MTE en prévision · ${esc(S.moisPrev)}</span>
       <div class="big">${fE.format(m.prev_mt || 0)}</div>
       <div class="meta">Potentiel fin de mois : <b style="color:var(--ink)">${fE.format(m.pot_mt || 0)}</b> · déjà signé : ${fE.format(m.mt_signe || 0)}</div>
+      <div class="meta" style="margin-top:6px">Prime BDC (affaires ≥ 1 000 € de MTE) : <b style="color:var(--ink)">${bdc.txt}</b></div>
     </div>
     <div class="g2">
       ${prevCard('Achat', 'var(--c-achat)', 'prev_achat', 'pot_achat', 'eur')}
@@ -544,17 +653,17 @@ function renderPrev() {
     <div class="card">
       <h2 class="h2">Déjà signés (100 %)</h2>
       <p class="sub">${signes.length} affaire${signes.length > 1 ? 's' : ''} · MTE : ${fE.format(signes.reduce((s, a) => s + a.mte, 0))} · commission : ${fE.format(signes.reduce((s, a) => s + a.commission, 0))}</p>
-      ${signes.length ? sous('À administrer', sNon, 'Tout est administré.') + sous('Administrés', sAdm, 'Aucun dossier administré pour l\'instant.') : '<div class="empty">Aucune affaire signée ce mois-ci pour l\'instant.</div>'}
+      ${signes.length ? sous('À administrer', 'p-non', sNon, 'Tout est administré.') + sous('Administrés', 'p-adm', sAdm, 'Aucun dossier administré pour l\'instant.') : '<div class="empty">Aucune affaire signée ce mois-ci pour l\'instant.</div>'}
     </div>
     <div class="card">
       <h2 class="h2">En prévision (80 à 99 %)</h2>
       <p class="sub">${prev.length} affaire${prev.length > 1 ? 's' : ''} · commission : ${fE.format(prev.reduce((s, a) => s + a.commission, 0))}</p>
-      <div class="items">${prev.length ? prev.map((a) => affItem(a, 'Com. ' + fE.format(a.commission))).join('') : '<div class="empty">Aucune affaire entre 80 et 99 % ce mois-ci.</div>'}</div>
+      <div class="items">${prev.length ? capped('p-prev', prev, 5, (a) => affItem(a, 'Com. ' + fE.format(a.commission))) : '<div class="empty">Aucune affaire entre 80 et 99 % ce mois-ci.</div>'}</div>
     </div>
     <div class="card">
       <h2 class="h2">Plus loin (moins de 80 %)</h2>
       <p class="sub">Affaires en cours, pas encore en prévision.</p>
-      <div class="items">${loin.length ? loin.map((a) => affItem(a, 'Com. ' + fE.format(a.commission))).join('') : '<div class="empty">Aucune.</div>'}</div>
+      <div class="items">${loin.length ? capped('p-loin', loin, 5, (a) => affItem(a, 'Com. ' + fE.format(a.commission))) : '<div class="empty">Aucune.</div>'}</div>
     </div>`;
 }
 
@@ -586,7 +695,7 @@ function renderPrimes() {
       </div>
       <div class="card" style="margin-top:10px">
         <div class="plist">
-          ${rows.length ? rows.map((p) => `<div class="row"><span><i class="dot" style="background:${pc[p.type]}"></i>${esc(p.type)} <span class="meta" style="display:inline">· ${esc(p.periode)}</span></span><b>${fE.format(p.montant)}</b></div>`).join('') + `<div class="row tot"><span>Total</span><b>${fE.format(tot)}</b></div>` : '<div class="empty">Aucune prime pour ce filtre.</div>'}
+          ${rows.length ? `<div class="row tot"><span>Total</span><b>${fE.format(tot)}</b></div>` + capped('primes', rows, 8, (p) => `<div class="row"><span><i class="dot" style="background:${pc[p.type]}"></i>${esc(p.type)} <span class="meta" style="display:inline">· ${esc(p.periode)}</span></span><b>${fE.format(p.montant)}</b></div>`) : '<div class="empty">Aucune prime pour ce filtre.</div>'}
         </div>
       </div>
     </div>`;
@@ -595,10 +704,6 @@ function renderPrimes() {
 function renderAffaires() {
   const el = $('p-affaires');
   const mois = [...new Set(D.affaires.map((a) => a.mois))];
-  const okAdmin = (a) => !S.aAdmin || (num(a.signature) >= 1 && (S.aAdmin === 'oui' ? a.administre : !a.administre));
-  let l = D.affaires.filter((a) => (!S.aMois || a.mois === S.aMois) && (!S.aStatut || a.statut === S.aStatut) && a.mte >= S.aMin && okAdmin(a));
-  if (S.aTri === 'desc') l = [...l].sort((a, b) => b.mte - a.mte);
-  if (S.aTri === 'asc') l = [...l].sort((a, b) => a.mte - b.mte);
   const pmax = Math.max(1, ...D.parMetier.map((r) => r.mte));
   const opt = (v, t, cur) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(t)}</option>`;
   el.innerHTML = `
@@ -624,23 +729,78 @@ function renderAffaires() {
     <div class="card">
       <h2 class="h2">Top 10 clients</h2>
       <p class="sub">Classés par MTE signée.</p>
-      <div class="items">${D.top.map((r, i) => `<div class="it"><div class="it-c"><span class="rank">${i + 1}</span>${esc(r.client)}</div><div class="it-v">${fE.format(r.mte)}</div><div class="it-m" style="padding-left:30px">${r.nb} affaire${r.nb > 1 ? 's' : ''} · ${pct(r.part)} du total</div></div>`).join('') || '<div class="empty">Aucune affaire gagnée.</div>'}</div>
+      <div class="items">${D.top.length ? capped('top', D.top.map((r, i) => ({...r, i})), 5, (r) => `<div class="it"><div class="it-c"><span class="rank">${r.i + 1}</span>${esc(r.client)}</div><div class="it-v">${fE.format(r.mte)}</div><div class="it-m" style="padding-left:30px">${r.nb} affaire${r.nb > 1 ? 's' : ''} · ${pct(r.part)} du total</div></div>`) : '<div class="empty">Aucune affaire gagnée.</div>'}</div>
     </div>
     <div>
       <h2 class="h2" id="mes-affaires">Mes affaires</h2>
-      <p class="sub">${l.length} affaire${l.length > 1 ? 's' : ''} affichée${l.length > 1 ? 's' : ''}</p>
+      <p class="sub" id="aff-count"></p>
+      <input class="search" type="search" placeholder="Rechercher un client ou un n° de projet" value="${esc(S.q)}" data-search autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Rechercher">
       <div class="filters">
         <select data-sel="aMois" aria-label="Mois">${opt('', 'Tous les mois', S.aMois)}${mois.map((m) => opt(m, m, S.aMois)).join('')}</select>
         <select data-sel="aStatut" aria-label="Statut">${opt('', 'Tous statuts', S.aStatut)}${['Gagné','En cours','Perdu'].map((m) => opt(m, m, S.aStatut)).join('')}</select>
         <select data-sel="aMin" aria-label="MTE minimum">${[[0,'Toutes MTE'],[1000,'MTE ≥ 1 000 €'],[2500,'MTE ≥ 2 500 €'],[5000,'MTE ≥ 5 000 €'],[10000,'MTE ≥ 10 000 €'],[20000,'MTE ≥ 20 000 €']].map(([v, t]) => opt(v, t, S.aMin)).join('')}</select>
-        <select data-sel="aAdmin" aria-label="Administration">${opt('', 'Administration : tous', S.aAdmin)}${opt('non', 'Signés à administrer', S.aAdmin)}${opt('oui', 'Signés administrés', S.aAdmin)}</select>
+        <select data-sel="aAdmin" aria-label="Administration">${opt('', 'Administration', S.aAdmin)}${opt('non', 'Signés à administrer', S.aAdmin)}${opt('oui', 'Signés administrés', S.aAdmin)}</select>
         <select data-sel="aTri" aria-label="Tri">${opt('saisie', 'Ordre de saisie', S.aTri)}${opt('desc', 'MTE décroissante', S.aTri)}${opt('asc', 'MTE croissante', S.aTri)}</select>
       </div>
       <div class="card" style="margin-top:10px">
-        <div class="items">${l.length ? l.map((a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''))).join('') : '<div class="empty">Aucune affaire pour ce filtre.</div>'}</div>
+        <div class="items" id="aff-items"></div>
       </div>
     </div>`;
+  renderAffList();
 }
+function renderAffList() {
+  const box = $('aff-items');
+  if (!box) return;
+  const q = cle(S.q);
+  const okAdmin = (a) => !S.aAdmin || (num(a.signature) >= 1 && (S.aAdmin === 'oui' ? a.administre : !a.administre));
+  let l = D.affaires.filter((a) => (!S.aMois || a.mois === S.aMois) && (!S.aStatut || a.statut === S.aStatut) && a.mte >= S.aMin && okAdmin(a)
+    && (!q || cle(a.client).includes(q) || (a.projet || '').includes(S.q.trim())));
+  if (S.aTri === 'desc') l = [...l].sort((a, b) => b.mte - a.mte);
+  if (S.aTri === 'asc') l = [...l].sort((a, b) => a.mte - b.mte);
+  $('aff-count').textContent = l.length + ' affaire' + (l.length > 1 ? 's' : '') + ' · MTE ' + fE.format(l.reduce((s, a) => s + a.mte, 0)) + ' · touche une affaire pour le détail';
+  box.innerHTML = l.length ? capped('aff', l, 10, (a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''))) : '<div class="empty">Aucune affaire pour ce filtre.</div>';
+}
+
+/* ---------- Fiche d'une affaire ---------- */
+function vEur(x) { return typeof x === 'number' ? fE.format(x) : ''; }
+function vNum(x) { return typeof x === 'number' ? fN.format(x) : txt(x); }
+function openFiche(id) {
+  const a = D.affaires.find((x) => x.id === id);
+  if (!a) return;
+  closeFiche();
+  const kv = (k, v) => (v === '' || v == null ? '' : `<div class="kv"><span>${k}</span><b>${esc(v)}</b></div>`);
+  const signe = num(a.signature) >= 1;
+  const html = `<div class="sheet-bg" id="fiche" role="dialog" aria-modal="true" aria-label="Fiche ${esc(a.client)}"><div class="sheet">
+    <div class="grab"></div>
+    <div class="row" style="align-items:flex-start"><div style="min-width:0"><h2 class="h2">${esc(a.client)}</h2><div class="meta">${esc(a.mois)} · ${esc(a.metier)} · ${esc(a.type_client)}</div></div><button class="xbtn" data-close aria-label="Fermer">✕</button></div>
+    <div class="g2" style="margin:14px 0 6px">
+      <div class="card" style="padding:10px 12px"><span class="lab">MTE</span><div class="big" style="font-size:20px">${fE.format(a.mte)}</div></div>
+      <div class="card" style="padding:10px 12px"><span class="lab">Commission brute</span><div class="big" style="font-size:20px">${fE.format(a.commission)}</div></div>
+    </div>
+    ${kv('% signature', a.signature == null ? '' : pct(a.signature))}
+    ${kv('Statut', a.statut)}
+    ${kv('Administré', signe ? (a.administre ? 'Oui' : 'Non, à faire') : a.admin_txt)}
+    ${kv('N° de projet', a.projet)}
+    ${kv('Lead GRC', a.lead_grc)}
+    ${kv('Nouveau métier', a.nouveau)}
+    ${kv('Type produit', a.produit)}
+    ${kv('Quantité', vNum(a.quantite))}
+    ${kv('Points', a.points ? fN.format(a.points) : '')}
+    ${kv('Points Challenge National', vNum(a.challenge))}
+    ${kv('Achat', fE.format(a.achat))}
+    ${kv('CA hard', vEur(a.ca_hard))}
+    ${kv('Marge hard nette', vEur(a.marge_hard))}
+    ${kv('Marge NEW (MRM)', vEur(a.marge_new))}
+    ${kv('Commission de base', fE.format(a.commission_base))}
+    ${kv('Base prime MRM', a.mrm_choix)}
+    ${kv('Delta CA (New − Old)', vEur(a.delta))}
+    ${kv('Base MRM retenue', vEur(a.mrm_base))}
+    ${kv('Commentaire', a.commentaire)}
+  </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.body.style.overflow = 'hidden';
+}
+function closeFiche() { const f = $('fiche'); if (f) f.remove(); document.body.style.overflow = ''; }
 
 function renderAll() {
   renderStrip();
@@ -736,12 +896,20 @@ $('btn-refresh').addEventListener('click', () => refresh());
 
 /* ---------- Interactions ---------- */
 document.addEventListener('click', (ev) => {
+  const fb = ev.target.closest('#fiche');
+  if (fb) { if (ev.target === fb || ev.target.closest('[data-close]')) closeFiche(); return; }
   const t = ev.target.closest('[data-tab]');
   if (t) { showTab(t.dataset.tab, true); return; }
+  const pe = ev.target.closest('[data-per]');
+  if (pe) { S.per = pe.dataset.per; try { localStorage.setItem('kpi_per', S.per); } catch (e) {} renderStrip(); return; }
+  const mo = ev.target.closest('[data-more]');
+  if (mo) { const k = mo.dataset.more; S.more[k] = !S.more[k]; if (k === 'aff') renderAffList(); else ({resume: renderResume, prev: renderPrev, primes: renderPrimes, affaires: renderAffaires})[S.tab](); return; }
+  const it = ev.target.closest('.it[data-id]');
+  if (it) { openFiche(it.dataset.id); return; }
   const g = ev.target.closest('[data-goto]');
   if (g) { showTab(g.dataset.goto, true); return; }
   const ad = ev.target.closest('[data-admin]');
-  if (ad) { S.aAdmin = ad.dataset.admin; S.aMois = ''; S.aStatut = ''; S.aMin = 0; renderAffaires(); const h = $('mes-affaires'); if (h) window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - 170); return; }
+  if (ad) { S.aAdmin = ad.dataset.admin; S.aMois = ''; S.aStatut = ''; S.aMin = 0; S.q = ''; renderAffaires(); const h = $('mes-affaires'); if (h) window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - 170); return; }
   const bar = ev.target.closest('[data-bar]');
   if (bar) { const i = +bar.dataset.bar; S.sel = S.sel === i ? -1 : i; drawChart(); return; }
   const sb = ev.target.closest('[data-seg] button, [data-chips] button');
@@ -757,7 +925,17 @@ document.addEventListener('change', (ev) => {
   if (!s) return;
   const k = s.dataset.sel;
   S[k] = k === 'aMin' ? +s.value || 0 : s.value;
-  if (k[0] === 'p') renderPrimes(); else renderAffaires();
+  if (k[0] === 'p') renderPrimes(); else { S.more.aff = false; renderAffList(); }
+});
+document.addEventListener('input', (ev) => {
+  const s = ev.target.closest('[data-search]');
+  if (!s) return;
+  S.q = s.value; S.more.aff = false; renderAffList();
+});
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape') closeFiche();
+  if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('.it[data-id]')) openFiche(ev.target.dataset.id);
+  if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-search]')) ev.target.blur();
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastFetch > 30000) refresh(); });
 let resizeT;
