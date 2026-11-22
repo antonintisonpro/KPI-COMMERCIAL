@@ -512,6 +512,7 @@ function renderPrev() {
   if (!mois.includes(S.moisPrev)) S.moisPrev = mois[0];
   const m = D.mois_detail.find((x) => x.mois === S.moisPrev) || {};
   const l = D.affaires.filter((a) => a.mois === S.moisPrev);
+  const signes = l.filter((a) => num(a.signature) >= 1);
   const prev = l.filter((a) => num(a.signature) >= 0.8 && num(a.signature) < 1);
   const loin = l.filter((a) => a.statut === 'En cours' && num(a.signature) < 0.8).sort((a, b) => num(b.signature) - num(a.signature));
   el.innerHTML = `
@@ -531,6 +532,11 @@ function renderPrev() {
       ${prevCard('Challenge National', 'var(--c-vio)', 'prev_challenge', 'pot_challenge', 'num')}
       ${prevCard('Commission brute', 'var(--c-mag)', 'prev_commission', 'pot_commission', 'eur')}
       ${prevCard("Nombre d'affaires", 'var(--c-vert)', 'prev_nb', 'pot_nb', 'int')}
+    </div>
+    <div class="card">
+      <h2 class="h2">Déjà signés (100 %)</h2>
+      <p class="sub">${signes.length} affaire${signes.length > 1 ? 's' : ''} · MTE : ${fE.format(signes.reduce((s, a) => s + a.mte, 0))} · commission : ${fE.format(signes.reduce((s, a) => s + a.commission, 0))}</p>
+      <div class="items">${signes.length ? signes.map((a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''))).join('') : '<div class="empty">Aucune affaire signée ce mois-ci pour l\'instant.</div>'}</div>
     </div>
     <div class="card">
       <h2 class="h2">En prévision (80 à 99 %)</h2>
