@@ -198,6 +198,13 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 .split div{height:100%}
 .inline{display:flex;align-items:center;gap:10px;margin-top:4px}
 .inline span{font-size:14px;color:var(--ink2);white-space:nowrap}
+.gs-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+.gs-row:first-child{border-top:0}
+.gs-row b{font-size:15px}
+.gs-n{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-m{font-size:13px;color:var(--ink3)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--line);color:var(--ink2)}
 </style>
 </head>
 <body>
@@ -208,6 +215,7 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
       <h1>Mes KPI</h1>
       <div class="maj" id="maj">Chargement…</div>
     </div>
+    <button class="ibtn" id="btn-search" aria-label="Rechercher un client"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
     <button class="ibtn" id="btn-refresh" aria-label="Actualiser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
     <button class="ibtn" id="btn-setup" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
@@ -1057,17 +1065,79 @@ function openListe(kind) {
   openSheet(`<h2 class="h2">${lbl} · ${esc(per)}</h2><div class="meta">${l.length} affaire${l.length > 1 ? 's' : ''} · total ${fmt(l.reduce((s2, a) => s2 + a[f], 0))}</div>`,
     `<div class="items" style="margin-top:10px">${l.map((a) => affItem(a, 'MTE ' + fE.format(a.mte) + ' · Com. ' + fE.format(a.commission), fmt(a[f]))).join('') || '<div class="empty">Aucune affaire signée.</div>'}</div>`, lbl);
 }
+const cleS = (x) => cle(x).replace(/[^a-z0-9]+/g, ' ').trim();
+function clientsIndex() {
+  const m = new Map();
+  D.affaires.forEach((a) => {
+    const k = cle(a.client);
+    const r = m.get(k) || {key: k, nom: txt(a.client), s: cleS(a.client), nb: 0, sign: 0, cours: 0, mte: 0, last: -1, lastMois: ''};
+    r.nb++;
+    if (num(a.signature) >= 1) { r.sign++; r.mte += a.mte; }
+    if (a.statut === 'En cours') r.cours++;
+    const i = MOIS.indexOf(a.mois);
+    if (i > r.last) { r.last = i; r.lastMois = a.mois; }
+    m.set(k, r);
+  });
+  return [...m.values()];
+}
+function openSearch() {
+  openSheet('<h2 class="h2">Rechercher un client</h2><div class="meta">Toutes ses affaires, ses chiffres et ses primes</div>',
+    `<input class="search" type="search" style="margin-top:12px" placeholder="Nom du client ou n° de projet" data-gsearch autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Rechercher un client">
+     <div id="gs-res" style="min-height:58vh"></div>`, 'Rechercher un client');
+  const i = document.querySelector('[data-gsearch]');
+  if (i) { i.value = S.gq || ''; i.focus(); }
+  renderGSearch();
+}
+function renderGSearch() {
+  const box = $('gs-res');
+  if (!box) return;
+  const q = cleS(S.gq || ''), toks = q ? q.split(' ') : [];
+  let cl = clientsIndex();
+  const dossiers = q && /\d{3,}/.test(q) ? D.affaires.filter((a) => (a.projet || '').includes(q.replace(/\s/g, ''))) : [];
+  if (toks.length) cl = cl.filter((c) => toks.every((t) => c.s.includes(t)));
+  cl.sort((a, b) => (toks.length ? (b.s.startsWith(toks[0]) - a.s.startsWith(toks[0])) || b.mte - a.mte : a.s.localeCompare(b.s)));
+  const n = cl.length;
+  let h = '';
+  if (dossiers.length) h += '<p class="grp" style="margin:14px 0 2px">Dossiers</p><div class="items">' + dossiers.slice(0, 10).map((a) => affItem(a, 'N° ' + esc(a.projet))).join('') + '</div>';
+  h += `<p class="grp" style="margin:14px 0 2px">${toks.length ? n + ' client' + (n > 1 ? 's' : '') : 'Tous tes clients (' + n + ')'}</p>`;
+  h += n ? '<div>' + cl.slice(0, 40).map((c) => `<div class="gs-row" data-client="${esc(c.key)}" role="button" tabindex="0">
+      <div style="min-width:0"><div class="gs-n">${esc(c.nom)}</div><div class="gs-m">${c.nb} affaire${c.nb > 1 ? 's' : ''} · ${c.sign} signée${c.sign > 1 ? 's' : ''}${c.cours ? ' · ' + c.cours + ' en cours' : ''} · ${esc(c.lastMois)}</div></div>
+      <b>${fE.format(c.mte)} ›</b></div>`).join('') + '</div>' + (n > 40 ? '<p class="note">Affine ta recherche pour voir les autres.</p>' : '')
+    : '<div class="empty">Aucun client ne correspond.</div>';
+  box.innerHTML = h;
+}
 function openClient(key) {
-  const l = D.affaires.filter((a) => cle(a.client) === key);
+  const l = D.affaires.filter((a) => cle(a.client) === key).sort((a, b) => MOIS.indexOf(a.mois) - MOIS.indexOf(b.mois));
   if (!l.length) return;
-  const g = l.filter((a) => num(a.signature) >= 1);
+  const g = l.filter((a) => num(a.signature) >= 1), ec = l.filter((a) => a.statut === 'En cours'), pe = l.filter((a) => a.statut === 'Perdu');
   const nom = (g[0] || l[0]).client;
-  openSheet(`<h2 class="h2">${esc(nom)}</h2><div class="meta">${l.length} affaire${l.length > 1 ? 's' : ''} · ${g.length} signée${g.length > 1 ? 's' : ''} · ${l.filter((a) => a.statut === 'En cours').length} en cours</div>`,
+  const sum = (x, k) => x.reduce((s2, a) => s2 + num(a[k]), 0);
+  const fams = [...new Set(l.map((a) => famille(a.metier)))];
+  const type = l[l.length - 1].type_client;
+  const grc = l.filter((a) => a.lead_grc === 'Oui').length;
+  const aAdm = g.filter((a) => !a.administre).length;
+  const kv = (k, v) => (v === '' || v == null ? '' : `<div class="kv"><span>${k}</span><b>${v}</b></div>`);
+  const cell = (lab, v) => `<div class="card" style="padding:10px 12px"><span class="lab">${lab}</span><div class="big" style="font-size:20px">${v}</div></div>`;
+  const list = (titre, x, right) => (x.length ? `<p class="grp" style="margin:16px 0 2px">${titre} · ${x.length}</p><div class="items">${x.map((a) => affItem(a, right(a))).join('')}</div>` : '');
+  const back = S.backSearch ? '<button class="link" style="margin:0 0 6px" data-back-search>‹ Recherche</button>' : '';
+  S.backSearch = false;
+  openSheet(`${back}<h2 class="h2">${esc(nom)}</h2><div class="meta">${esc(type)} · ${l.length} affaire${l.length > 1 ? 's' : ''} · ${g.length} signée${g.length > 1 ? 's' : ''}</div><div class="tags">${fams.map((f) => `<span class="tag">${esc(f)}</span>`).join('')}</div>`,
     `<div class="g2" style="margin:14px 0 6px">
-      <div class="card" style="padding:10px 12px"><span class="lab">MTE signée</span><div class="big" style="font-size:20px">${fE.format(g.reduce((s2, a) => s2 + a.mte, 0))}</div></div>
-      <div class="card" style="padding:10px 12px"><span class="lab">Commission</span><div class="big" style="font-size:20px">${fE.format(g.reduce((s2, a) => s2 + a.commission, 0))}</div></div>
+      ${cell('MTE signée', fE.format(sum(g, 'mte')))}
+      ${cell('Commission brute', fE.format(sum(g, 'commission')))}
+      ${cell('Achat signé', fE.format(sum(g, 'achat')))}
+      ${cell('Points', fN.format(sum(g, 'points')))}
     </div>
-    <div class="items">${l.map((a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission))).join('')}</div>`, nom);
+    ${kv('En cours', ec.length ? `${ec.length} · MTE ${fE.format(sum(ec, 'mte'))} (pondérée ${fE.format(ec.reduce((s2, a) => s2 + a.mte * num(a.signature), 0))})` : 'Aucune')}
+    ${kv('Perdues', pe.length || '')}
+    ${kv('Panier moyen signé', g.length ? fE.format(sum(g, 'mte') / g.length) : '')}
+    ${kv('Lead GRC', grc ? grc + ' affaire' + (grc > 1 ? 's' : '') : 'Non')}
+    ${kv('Administration', g.length ? (aAdm ? aAdm + ' à administrer' : 'Tout est administré') : '')}
+    ${kv('Première affaire', esc(l[0].mois))}
+    ${kv('Dernière affaire', esc(l[l.length - 1].mois))}
+    ${list('Signées', g, (a) => 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''))}
+    ${list('En cours', ec, (a) => 'Com. ' + fE.format(a.commission))}
+    ${list('Perdues', pe, () => '')}`, nom);
 }
 function closeFiche() { const f = $('fiche'); if (f) f.remove(); document.body.style.overflow = ''; }
 
@@ -1163,13 +1233,15 @@ $('setup-ok').addEventListener('click', () => {
 $('setup-cancel').addEventListener('click', () => $('setup').classList.add('hide'));
 $('btn-setup').addEventListener('click', () => openSetup(true));
 $('btn-refresh').addEventListener('click', () => refresh());
+$('btn-search').addEventListener('click', () => { if (D) openSearch(); });
 
 /* ---------- Interactions ---------- */
 document.addEventListener('click', (ev) => {
   const fb = ev.target.closest('#fiche');
   if (fb && (ev.target === fb || ev.target.closest('[data-close]'))) { closeFiche(); return; }
+  if (ev.target.closest('[data-back-search]')) { openSearch(); return; }
   const cl = ev.target.closest('[data-client]');
-  if (cl) { openClient(cl.dataset.client); return; }
+  if (cl) { S.backSearch = !!$('gs-res'); openClient(cl.dataset.client); return; }
   const li = ev.target.closest('[data-liste]');
   if (li) { openListe(li.dataset.liste); return; }
   const vb = ev.target.closest('[data-vbar]');
@@ -1220,6 +1292,8 @@ document.addEventListener('change', (ev) => {
   renderSimRes();
 });
 document.addEventListener('input', (ev) => {
+  const gs = ev.target.closest('[data-gsearch]');
+  if (gs) { S.gq = gs.value; renderGSearch(); return; }
   const s = ev.target.closest('[data-search]');
   if (!s) return;
   S.q = s.value; S.more.aff = false; renderAffList();
@@ -1229,7 +1303,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('.it[data-id]')) openFiche(ev.target.dataset.id);
   if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-liste]')) openListe(ev.target.dataset.liste);
   if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-client]')) openClient(ev.target.dataset.client);
-  if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-search]')) ev.target.blur();
+  if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-search], [data-gsearch]')) ev.target.blur();
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastFetch > 30000) refresh(); });
 let resizeT;
