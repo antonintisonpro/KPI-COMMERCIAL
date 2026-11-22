@@ -256,7 +256,8 @@ function parse(raw) {
         signature: typeof r[1] === 'number' ? r[1] : null,
         metier: txt(r[4]) || 'Non renseigné', type_client: txt(r[5]) || 'Non renseigné', lead_grc: txt(r[6]) || 'Non',
         statut: txt(r[8]) || 'Non renseigné',
-        achat: num(r[9]), mte: num(r[12]), commission_base: num(r[14]), commission: num(r[15]), points: num(r[16])
+        achat: num(r[9]), mte: num(r[12]), commission_base: num(r[14]), commission: num(r[15]), points: num(r[16]),
+        administre: txt(r[19]).toLowerCase() === 'oui'
       });
     }
     const g = (row, col) => num((rows[row - 1] || [])[col]);
@@ -295,6 +296,8 @@ function compute(raw) {
   const gagnes = affaires.filter((a) => a.statut === 'Gagné');
   const enCours = affaires.filter((a) => a.statut === 'En cours');
   const pipeline = {nb: enCours.length, mt: sum(enCours, 'mte'), pond: enCours.reduce((s, a) => s + a.mte * num(a.signature), 0)};
+  const aAdmin = affaires.filter((a) => num(a.signature) >= 1 && !a.administre);
+  const admin = {nb: aAdmin.length, mte: sum(aAdmin, 'mte'), faits: affaires.filter((a) => num(a.signature) >= 1 && a.administre).length};
 
   const pm = new Map();
   gagnes.forEach((a) => { const r = pm.get(a.metier) || {metier: a.metier, mte: 0, nb: 0}; r.mte += a.mte; r.nb++; pm.set(a.metier, r); });
@@ -341,12 +344,12 @@ function compute(raw) {
   const lg = affaires.filter((a) => num(a.signature) >= 1 && a.lead_grc === 'Oui');
   const grc = {nb: lg.length, cede: r2(sum(lg, 'commission_base') - sum(lg, 'commission'))};
 
-  return {...p, trim, cumul, pipeline, parMetier, sigMetier, top, ratios, primes, primesType, primesTotal, grc};
+  return {...p, trim, cumul, pipeline, admin, parMetier, sigMetier, top, ratios, primes, primesType, primesTotal, grc};
 }
 
 /* ---------- État ---------- */
 const nowMois = CAL[new Date().getMonth()];
-const S = {tab: 'resume', metric: 'mt', tri: TRI[nowMois] || 'T1', moisPrev: nowMois, sel: -1, pType: '', pTri: '', aMois: '', aStatut: '', aMin: 0, aTri: 'saisie'};
+const S = {tab: 'resume', metric: 'mt', tri: TRI[nowMois] || 'T1', moisPrev: nowMois, sel: -1, pType: '', pTri: '', aMois: '', aStatut: '', aMin: 0, aTri: 'saisie', aAdmin: ''};
 try { S.tab = sessionStorage.getItem('kpi_tab') || 'resume'; } catch (e) {}
 let D = null, RAW = null, lastFetch = 0, loading = false;
 
@@ -499,10 +502,12 @@ function prevCard(label, a, kp, kpot, f) {
   return `<div class="card cat" style="--a:${a}"><span class="lab">${label}</span><div class="big">${fmt(m[kp])}</div><div class="meta">Potentiel : ${fmt(m[kpot])}</div></div>`;
 }
 function affItem(a, right) {
-  const st = a.statut === 'Gagné' ? 'ok-t' : a.statut === 'Perdu' ? 'bad-t' : 'warn-t';
+  const signe = num(a.signature) >= 1;
+  const st = signe ? (a.administre ? 'ok-t' : 'warn-t') : a.statut === 'Gagné' ? 'ok-t' : a.statut === 'Perdu' ? 'bad-t' : 'warn-t';
+  const lab = signe ? (a.administre ? 'Administré' : 'À administrer') : a.statut;
   return `<div class="it">
     <div class="it-c">${esc(a.client)}</div><div class="it-v">${fE.format(a.mte)}</div>
-    <div class="it-m">${esc(a.mois)} · ${esc(a.metier)} · ${a.signature == null ? '—' : pct(a.signature)}<span class="pill ${st}">${esc(a.statut)}</span></div>
+    <div class="it-m">${esc(a.mois)} · ${esc(a.metier)} · ${a.signature == null ? '—' : pct(a.signature)}<span class="pill ${st}">${esc(lab)}</span></div>
     <div class="it-s">${right || ''}</div>
   </div>`;
 }
@@ -513,6 +518,9 @@ function renderPrev() {
   const m = D.mois_detail.find((x) => x.mois === S.moisPrev) || {};
   const l = D.affaires.filter((a) => a.mois === S.moisPrev);
   const signes = l.filter((a) => num(a.signature) >= 1);
+  const sAdm = signes.filter((a) => a.administre), sNon = signes.filter((a) => !a.administre);
+  const detail = (a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''));
+  const sous = (titre, list, vide) => `<p class="grp" style="margin:14px 0 2px">${titre} · ${list.length}</p><div class="items">${list.length ? list.map(detail).join('') : '<div class="empty">' + vide + '</div>'}</div>`;
   const prev = l.filter((a) => num(a.signature) >= 0.8 && num(a.signature) < 1);
   const loin = l.filter((a) => a.statut === 'En cours' && num(a.signature) < 0.8).sort((a, b) => num(b.signature) - num(a.signature));
   el.innerHTML = `
@@ -536,7 +544,7 @@ function renderPrev() {
     <div class="card">
       <h2 class="h2">Déjà signés (100 %)</h2>
       <p class="sub">${signes.length} affaire${signes.length > 1 ? 's' : ''} · MTE : ${fE.format(signes.reduce((s, a) => s + a.mte, 0))} · commission : ${fE.format(signes.reduce((s, a) => s + a.commission, 0))}</p>
-      <div class="items">${signes.length ? signes.map((a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''))).join('') : '<div class="empty">Aucune affaire signée ce mois-ci pour l\'instant.</div>'}</div>
+      ${signes.length ? sous('À administrer', sNon, 'Tout est administré.') + sous('Administrés', sAdm, 'Aucun dossier administré pour l\'instant.') : '<div class="empty">Aucune affaire signée ce mois-ci pour l\'instant.</div>'}
     </div>
     <div class="card">
       <h2 class="h2">En prévision (80 à 99 %)</h2>
@@ -587,7 +595,8 @@ function renderPrimes() {
 function renderAffaires() {
   const el = $('p-affaires');
   const mois = [...new Set(D.affaires.map((a) => a.mois))];
-  let l = D.affaires.filter((a) => (!S.aMois || a.mois === S.aMois) && (!S.aStatut || a.statut === S.aStatut) && a.mte >= S.aMin);
+  const okAdmin = (a) => !S.aAdmin || (num(a.signature) >= 1 && (S.aAdmin === 'oui' ? a.administre : !a.administre));
+  let l = D.affaires.filter((a) => (!S.aMois || a.mois === S.aMois) && (!S.aStatut || a.statut === S.aStatut) && a.mte >= S.aMin && okAdmin(a));
   if (S.aTri === 'desc') l = [...l].sort((a, b) => b.mte - a.mte);
   if (S.aTri === 'asc') l = [...l].sort((a, b) => a.mte - b.mte);
   const pmax = Math.max(1, ...D.parMetier.map((r) => r.mte));
@@ -598,6 +607,8 @@ function renderAffaires() {
       <div class="g2">
         <div class="card"><span class="lab">En cours</span><div class="big">${D.pipeline.nb}</div><div class="meta">MTE totale ${fE.format(D.pipeline.mt)}</div></div>
         <div class="card"><span class="lab">MTE pondérée</span><div class="big">${fE.format(D.pipeline.pond)}</div><div class="meta">MTE × % signature</div></div>
+        <div class="card cat" style="--a:var(--warn)"><span class="lab">Signés à administrer</span><div class="big">${D.admin.nb}</div><div class="meta">MTE ${fE.format(D.admin.mte)}</div><button class="link" style="margin-top:6px" data-admin="non">Voir la liste →</button></div>
+        <div class="card cat" style="--a:var(--ok)"><span class="lab">Signés administrés</span><div class="big">${D.admin.faits}</div><button class="link" style="margin-top:6px" data-admin="oui">Voir la liste →</button></div>
       </div>
     </div>
     <div class="card">
@@ -616,12 +627,13 @@ function renderAffaires() {
       <div class="items">${D.top.map((r, i) => `<div class="it"><div class="it-c"><span class="rank">${i + 1}</span>${esc(r.client)}</div><div class="it-v">${fE.format(r.mte)}</div><div class="it-m" style="padding-left:30px">${r.nb} affaire${r.nb > 1 ? 's' : ''} · ${pct(r.part)} du total</div></div>`).join('') || '<div class="empty">Aucune affaire gagnée.</div>'}</div>
     </div>
     <div>
-      <h2 class="h2">Mes affaires</h2>
+      <h2 class="h2" id="mes-affaires">Mes affaires</h2>
       <p class="sub">${l.length} affaire${l.length > 1 ? 's' : ''} affichée${l.length > 1 ? 's' : ''}</p>
       <div class="filters">
         <select data-sel="aMois" aria-label="Mois">${opt('', 'Tous les mois', S.aMois)}${mois.map((m) => opt(m, m, S.aMois)).join('')}</select>
         <select data-sel="aStatut" aria-label="Statut">${opt('', 'Tous statuts', S.aStatut)}${['Gagné','En cours','Perdu'].map((m) => opt(m, m, S.aStatut)).join('')}</select>
         <select data-sel="aMin" aria-label="MTE minimum">${[[0,'Toutes MTE'],[1000,'MTE ≥ 1 000 €'],[2500,'MTE ≥ 2 500 €'],[5000,'MTE ≥ 5 000 €'],[10000,'MTE ≥ 10 000 €'],[20000,'MTE ≥ 20 000 €']].map(([v, t]) => opt(v, t, S.aMin)).join('')}</select>
+        <select data-sel="aAdmin" aria-label="Administration">${opt('', 'Administration : tous', S.aAdmin)}${opt('non', 'Signés à administrer', S.aAdmin)}${opt('oui', 'Signés administrés', S.aAdmin)}</select>
         <select data-sel="aTri" aria-label="Tri">${opt('saisie', 'Ordre de saisie', S.aTri)}${opt('desc', 'MTE décroissante', S.aTri)}${opt('asc', 'MTE croissante', S.aTri)}</select>
       </div>
       <div class="card" style="margin-top:10px">
@@ -728,6 +740,8 @@ document.addEventListener('click', (ev) => {
   if (t) { showTab(t.dataset.tab, true); return; }
   const g = ev.target.closest('[data-goto]');
   if (g) { showTab(g.dataset.goto, true); return; }
+  const ad = ev.target.closest('[data-admin]');
+  if (ad) { S.aAdmin = ad.dataset.admin; S.aMois = ''; S.aStatut = ''; S.aMin = 0; renderAffaires(); const h = $('mes-affaires'); if (h) window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - 170); return; }
   const bar = ev.target.closest('[data-bar]');
   if (bar) { const i = +bar.dataset.bar; S.sel = S.sel === i ? -1 : i; drawChart(); return; }
   const sb = ev.target.closest('[data-seg] button, [data-chips] button');
