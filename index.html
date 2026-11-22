@@ -137,7 +137,7 @@ select{appearance:none;-webkit-appearance:none;width:100%;border:1px solid var(-
 details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 
 /* Barre d'onglets */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(4,1fr);background:color-mix(in srgb,var(--card) 88%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,1fr);background:color-mix(in srgb,var(--card) 88%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
 .tabbar button{appearance:none;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;font-size:11px;color:var(--ink3);cursor:pointer}
 .tabbar svg{width:24px;height:24px}
 .tabbar button.on{color:var(--tabon);font-weight:600}
@@ -235,6 +235,7 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
   <section class="panel hide" id="p-prev"></section>
   <section class="panel hide" id="p-primes"></section>
   <section class="panel hide" id="p-affaires"></section>
+  <section class="panel hide" id="p-clients"></section>
 </main>
 
 <nav class="tabbar" aria-label="Sections">
@@ -242,6 +243,7 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
   <button data-tab="prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Prévisions</button>
   <button data-tab="primes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7.5A6.5 6.5 0 1 0 18 16.5"/><path d="M4 10.5h9M4 13.5h9"/></svg>Primes</button>
   <button data-tab="affaires"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>Affaires</button>
+  <button data-tab="clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg>Clients</button>
 </nav>
 
 <div class="setup hide" id="setup">
@@ -549,6 +551,7 @@ function renderResume() {
     <div class="row"><span class="meta" style="margin:0">${fmtK(k, v)} sur ${fmtK(k, obj)}</span></div>
     <div class="bar"><div class="${t.vide ? '' : tone(p) + '-bg'}" style="width:${t.vide ? 0 : Math.min(100, p * 100)}%"></div></div></div>`;
   const r = D.ratios;
+  const fams = D.sigMetier.filter((x) => x.sign), famTot = fams.reduce((s2, x) => s2 + x.mte, 0) || 1, pmax = Math.max(1, ...fams.map((x) => x.mte));
   const mr = moisRow(), md = D.mois_detail.find((x) => x.mois === S.mois) || {}, bdc = bdcInfo(S.mois);
   const tc = curTri(), rel = ORDRE_T.indexOf(S.triSel) - ORDRE_T.indexOf(TRI[nowMois]);
   const bes = besoins(tc, S.mois === nowMois && TRI[S.mois] === S.triSel ? md : {}, rel < 0);
@@ -635,6 +638,17 @@ function renderResume() {
         <div class="card"><span class="lab">Sur prospects</span><div class="big">${pct(r.prospects)}</div></div>
         <div class="card"><span class="lab">Via lead GRC</span><div class="big">${pct(r.grc)}</div></div>
       </div>
+    </div>
+    <div class="card">
+      <h2 class="h2">MTE signée par métier</h2>
+      <p class="sub">Part de chaque métier dans ta MTE signée, et nombre d'affaires.</p>
+      <div class="hbars">${fams.map((x) => `<div class="hb"><span>${esc(x.famille)} (${x.sign})</span><div class="t" style="width:${(x.mte / pmax) * 100}%"></div><b>${pct(x.mte / famTot)} · ${fE.format(x.mte)}</b></div>`).join('') || '<div class="empty">Aucune affaire signée.</div>'}</div>
+    </div>
+    <div class="card">
+      <h2 class="h2">Signatures par métier</h2>
+      <p class="sub">IT = Informatique + Solution · Telco = Télécom + Opérateur.</p>
+      <table class="tbl"><thead><tr><th>Métier</th><th class="n">Sign.</th><th class="n">MTE</th><th class="n">En cours</th></tr></thead>
+      <tbody>${D.sigMetier.map((x) => `<tr><td>${esc(x.famille)}</td><td class="n">${x.sign}</td><td class="n">${fE.format(x.mte)}</td><td class="n">${x.en_cours}</td></tr>`).join('')}</tbody></table>
     </div>
     <details class="note">
       <summary>Comment sont calculés ces chiffres</summary>
@@ -949,11 +963,6 @@ function renderPrimes() {
 function renderAffaires() {
   const el = $('p-affaires');
   const mois = [...new Set(D.affaires.map((a) => a.mois))];
-  const fams = D.sigMetier.filter((r) => r.sign), famTot = fams.reduce((s2, r) => s2 + r.mte, 0) || 1;
-  const pmax = Math.max(1, ...fams.map((r) => r.mte));
-  const gg = D.affaires.filter((a) => a.statut === 'Gagné'), gTot = gg.reduce((s2, a) => s2 + a.mte, 0) || 1;
-  const gp = gg.filter((a) => a.type_client === 'Prospect'), gc = gg.filter((a) => a.type_client !== 'Prospect');
-  const mp = gp.reduce((s2, a) => s2 + a.mte, 0), mc = gc.reduce((s2, a) => s2 + a.mte, 0);
   const opt = (v, t, cur) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(t)}</option>`;
   el.innerHTML = `
     <div>
@@ -965,35 +974,10 @@ function renderAffaires() {
         <div class="card cat" style="--a:var(--ok)"><span class="lab">Signés administrés</span><div class="big">${D.admin.faits}</div><button class="link" style="margin-top:6px" data-admin="oui">Voir la liste →</button></div>
       </div>
     </div>
-    <div class="card">
-      <h2 class="h2">Conquête vs parc</h2>
-      <p class="sub">Affaires signées sur des prospects (nouveaux clients) ou sur tes clients existants.</p>
-      <div class="split" role="img" aria-label="Part de MTE prospects ${pct(mp / gTot)}"><div style="width:${(mp / gTot) * 100}%;background:var(--c-vio)"></div><div style="flex:1;background:var(--c-pts)"></div></div>
-      <div class="plist">
-        <div class="row"><span><i class="dot" style="background:var(--c-vio)"></i>Prospects · ${gp.length} affaire${gp.length > 1 ? 's' : ''}</span><b>${fE.format(mp)} · ${pct(mp / gTot)}</b></div>
-        <div class="row"><span><i class="dot" style="background:var(--c-pts)"></i>Clients · ${gc.length} affaire${gc.length > 1 ? 's' : ''}</span><b>${fE.format(mc)} · ${pct(mc / gTot)}</b></div>
-      </div>
-    </div>
-    <div class="card">
-      <h2 class="h2">Signatures par métier</h2>
-      <p class="sub">IT = Informatique + Solution · Telco = Télécom + Opérateur.</p>
-      <table class="tbl"><thead><tr><th>Métier</th><th class="n">Sign.</th><th class="n">MTE</th><th class="n">En cours</th></tr></thead>
-      <tbody>${D.sigMetier.map((r) => `<tr><td>${esc(r.famille)}</td><td class="n">${r.sign}</td><td class="n">${fE.format(r.mte)}</td><td class="n">${r.en_cours}</td></tr>`).join('')}</tbody></table>
-    </div>
-    <div class="card">
-      <h2 class="h2">MTE signée par métier</h2>
-      <p class="sub">Part de chaque métier dans ta MTE signée, et nombre d'affaires.</p>
-      <div class="hbars">${fams.map((r) => `<div class="hb"><span>${esc(r.famille)} (${r.sign})</span><div class="t" style="width:${(r.mte / pmax) * 100}%"></div><b>${pct(r.mte / famTot)} · ${fE.format(r.mte)}</b></div>`).join('') || '<div class="empty">Aucune affaire gagnée.</div>'}</div>
-    </div>
-    <div class="card">
-      <h2 class="h2">Top 10 clients</h2>
-      <p class="sub">Classés par MTE signée. Touche un client pour voir toutes ses affaires.</p>
-      <div class="items">${D.top.length ? capped('top', D.top.map((r, i) => ({...r, i})), 5, (r) => `<div class="it click" data-client="${esc(cle(r.client))}" role="button" tabindex="0"><div class="it-c"><span class="rank">${r.i + 1}</span>${esc(r.client)}</div><div class="it-v">${fE.format(r.mte)} ›</div><div class="it-m" style="padding-left:30px">${r.nb} affaire${r.nb > 1 ? 's' : ''} signée${r.nb > 1 ? 's' : ''} · ${pct(r.part)} du total</div></div>`) : '<div class="empty">Aucune affaire gagnée.</div>'}</div>
-    </div>
     <div>
       <h2 class="h2" id="mes-affaires">Mes affaires</h2>
       <p class="sub" id="aff-count"></p>
-      <input class="search" type="search" placeholder="Rechercher un client ou un n° de projet" value="${esc(S.q)}" data-search autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Rechercher">
+      <input class="search" type="search" placeholder="Filtrer : client ou n° de projet" value="${esc(S.q)}" data-search autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Rechercher">
       <div class="filters">
         <select data-sel="aMois" aria-label="Mois">${opt('', 'Tous les mois', S.aMois)}${mois.map((m) => opt(m, m, S.aMois)).join('')}</select>
         <select data-sel="aStatut" aria-label="Statut">${opt('', 'Tous statuts', S.aStatut)}${['Gagné','En cours','Perdu'].map((m) => opt(m, m, S.aStatut)).join('')}</select>
@@ -1007,6 +991,66 @@ function renderAffaires() {
       </div>
     </div>`;
   renderAffList();
+}
+function renderClients() {
+  const el = $('p-clients');
+  const idx = clientsIndex();
+  const signes = idx.filter((c) => c.sign);
+  const gg = D.affaires.filter((a) => num(a.signature) >= 1), gTot = gg.reduce((s2, a) => s2 + a.mte, 0) || 1;
+  const gp = gg.filter((a) => a.type_client === 'Prospect'), gc = gg.filter((a) => a.type_client !== 'Prospect');
+  const mp = gp.reduce((s2, a) => s2 + a.mte, 0), mc = gc.reduce((s2, a) => s2 + a.mte, 0);
+  const nouveaux = new Set(gp.map((a) => cle(a.client))).size;
+  const actifs = idx.filter((c) => c.cours).length;
+  el.innerHTML = `
+    <div>
+      <h2 class="h2">Mes clients</h2>
+      <p class="sub">${idx.length} clients et prospects suivis depuis avril. Touche un client pour toutes ses infos.</p>
+      <input class="search" type="search" placeholder="Rechercher un client ou un n° de projet" value="${esc(S.cq || '')}" data-csearch autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Rechercher un client">
+    </div>
+    <div class="g2">
+      <div class="card"><span class="lab">Clients signés</span><div class="big">${signes.length}</div><div class="meta">au moins une affaire à 100 %</div></div>
+      <div class="card"><span class="lab">Nouveaux clients</span><div class="big">${nouveaux}</div><div class="meta">prospects signés</div></div>
+      <div class="card"><span class="lab">MTE par client</span><div class="big">${fE.format(signes.length ? gTot / signes.length : 0)}</div><div class="meta">moyenne des clients signés</div></div>
+      <div class="card"><span class="lab">Affaire en cours</span><div class="big">${actifs}</div><div class="meta">clients avec au moins une affaire</div></div>
+    </div>
+    <div class="card">
+      <h2 class="h2" id="cl-titre"></h2>
+      <p class="sub" id="cl-sub"></p>
+      <div id="cl-res"></div>
+    </div>
+    <div class="card">
+      <h2 class="h2">Conquête vs parc</h2>
+      <p class="sub">Affaires signées sur des prospects (nouveaux clients) ou sur tes clients existants.</p>
+      <div class="split" role="img" aria-label="Part de MTE prospects ${pct(mp / gTot)}"><div style="width:${(mp / gTot) * 100}%;background:var(--c-vio)"></div><div style="flex:1;background:var(--c-pts)"></div></div>
+      <div class="plist">
+        <div class="row"><span><i class="dot" style="background:var(--c-vio)"></i>Prospects · ${gp.length} affaire${gp.length > 1 ? 's' : ''}</span><b>${fE.format(mp)} · ${pct(mp / gTot)}</b></div>
+        <div class="row"><span><i class="dot" style="background:var(--c-pts)"></i>Clients · ${gc.length} affaire${gc.length > 1 ? 's' : ''}</span><b>${fE.format(mc)} · ${pct(mc / gTot)}</b></div>
+      </div>
+    </div>`;
+  renderClientList();
+}
+function renderClientList() {
+  const box = $('cl-res');
+  if (!box) return;
+  const q = cleS(S.cq || ''), toks = q ? q.split(' ') : [];
+  const idx = clientsIndex();
+  const tot = idx.reduce((s2, c) => s2 + c.mte, 0) || 1;
+  const row = (c, i) => `<div class="gs-row" data-client="${esc(c.key)}" role="button" tabindex="0">
+      <div style="min-width:0;display:flex;align-items:center">${i != null ? `<span class="rank">${i + 1}</span>` : ''}<div style="min-width:0"><div class="gs-n">${esc(c.nom)}</div><div class="gs-m">${c.sign} signée${c.sign > 1 ? 's' : ''}${c.cours ? ' · ' + c.cours + ' en cours' : ''}${c.mte ? ' · ' + pct(c.mte / tot) + ' de ta MTE' : ''}</div></div></div>
+      <b>${fE.format(c.mte)} ›</b></div>`;
+  if (!toks.length) {
+    const top = idx.filter((c) => c.sign).sort((a, b) => b.mte - a.mte);
+    $('cl-titre').textContent = 'Top clients';
+    $('cl-sub').textContent = 'Classés par MTE signée depuis avril.';
+    box.innerHTML = top.length ? capped('cl-top', top.map((c, i) => ({...c, i})), 10, (c) => row(c, c.i)) : '<div class="empty">Aucun client signé pour l\'instant.</div>';
+    return;
+  }
+  const dossiers = /\d{3,}/.test(q) ? D.affaires.filter((a) => (a.projet || '').includes(q.replace(/\s/g, ''))) : [];
+  const res = idx.filter((c) => toks.every((t) => c.s.includes(t))).sort((a, b) => (b.s.startsWith(toks[0]) - a.s.startsWith(toks[0])) || b.mte - a.mte);
+  $('cl-titre').textContent = 'Résultats';
+  $('cl-sub').textContent = res.length + ' client' + (res.length > 1 ? 's' : '') + (dossiers.length ? ' · ' + dossiers.length + ' dossier' + (dossiers.length > 1 ? 's' : '') : '');
+  box.innerHTML = (dossiers.length ? '<div class="items">' + dossiers.slice(0, 10).map((a) => affItem(a, 'N° ' + esc(a.projet))).join('') + '</div>' : '')
+    + (res.length ? res.slice(0, 40).map((c) => row(c)).join('') : dossiers.length ? '' : '<div class="empty">Aucun client ne correspond.</div>');
 }
 function renderAffList() {
   const box = $('aff-items');
@@ -1160,13 +1204,13 @@ function closeFiche() { const f = $('fiche'); if (f) f.remove(); document.body.s
 function renderAll() {
   renderStrip();
   if (!D) return;
-  renderResume(); renderPrev(); renderPrimes(); renderAffaires();
+  renderResume(); renderPrev(); renderPrimes(); renderAffaires(); renderClients();
   showTab(S.tab, false);
 }
 function showTab(t, scroll) {
   S.tab = t;
   try { sessionStorage.setItem('kpi_tab', t); } catch (e) {}
-  ['resume','prev','primes','affaires'].forEach((x) => $('p-' + x).classList.toggle('hide', x !== t));
+  ['resume','prev','primes','affaires','clients'].forEach((x) => $('p-' + x).classList.toggle('hide', x !== t));
   document.querySelectorAll('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
   if (scroll) window.scrollTo(0, 0);
   if (t === 'resume') drawChart();
@@ -1249,7 +1293,7 @@ $('setup-ok').addEventListener('click', () => {
 $('setup-cancel').addEventListener('click', () => $('setup').classList.add('hide'));
 $('btn-setup').addEventListener('click', () => openSetup(true));
 $('btn-refresh').addEventListener('click', () => refresh());
-$('btn-search').addEventListener('click', () => { if (D) openSearch(); });
+$('btn-search').addEventListener('click', () => { if (!D) return; showTab('clients', true); const i = document.querySelector('[data-csearch]'); if (i) i.focus(); });
 
 /* ---------- Interactions ---------- */
 document.addEventListener('click', (ev) => {
@@ -1275,7 +1319,7 @@ document.addEventListener('click', (ev) => {
   const pe = ev.target.closest('[data-per]');
   if (pe) { S.per = pe.dataset.per; try { localStorage.setItem('kpi_per', S.per); } catch (e) {} renderStrip(); return; }
   const mo = ev.target.closest('[data-more]');
-  if (mo) { const k = mo.dataset.more; S.more[k] = !S.more[k]; if (k === 'aff') renderAffList(); else ({resume: renderResume, prev: renderPrev, primes: renderPrimes, affaires: renderAffaires})[S.tab](); return; }
+  if (mo) { const k = mo.dataset.more; S.more[k] = !S.more[k]; if (k === 'aff') renderAffList(); else ({resume: renderResume, prev: renderPrev, primes: renderPrimes, affaires: renderAffaires, clients: renderClients})[S.tab](); return; }
   const it = ev.target.closest('.it[data-id]');
   if (it) { openFiche(it.dataset.id); return; }
   const g = ev.target.closest('[data-goto]');
@@ -1310,6 +1354,8 @@ document.addEventListener('change', (ev) => {
   renderSimRes();
 });
 document.addEventListener('input', (ev) => {
+  const cs = ev.target.closest('[data-csearch]');
+  if (cs) { S.cq = cs.value; renderClientList(); return; }
   const gs = ev.target.closest('[data-gsearch]');
   if (gs) { S.gq = gs.value; renderGSearch(); return; }
   const s = ev.target.closest('[data-search]');
@@ -1321,7 +1367,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('.it[data-id]')) openFiche(ev.target.dataset.id);
   if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-liste]')) openListe(ev.target.dataset.liste);
   if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-client]')) openClient(ev.target.dataset.client);
-  if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-search], [data-gsearch]')) ev.target.blur();
+  if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-search], [data-gsearch], [data-csearch]')) ev.target.blur();
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastFetch > 30000) refresh(); });
 let resizeT;
