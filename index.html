@@ -1580,8 +1580,14 @@ window.addEventListener('touchend', (e) => { if (y0 != null && e.changedTouches[
 
 /* ---------- Démarrage ---------- */
 (function start() {
+  // Le lien de l'icône ne remplace le lien enregistré que s'il est nouveau (sinon le réglage ⚙︎ est conservé)
   const fromLink = urlFromParams();
-  if (fromLink && fromLink !== getUrl()) setUrl(fromLink);
+  let last = null;
+  try { last = localStorage.getItem('kpi_lastparam'); } catch (e) {}
+  if (fromLink && fromLink !== last) {
+    if (!(last === null && getUrl())) setUrl(fromLink);
+    try { localStorage.setItem('kpi_lastparam', fromLink); } catch (e) {}
+  }
   try { const c = localStorage.getItem(LS_DATA); if (c) useRaw(JSON.parse(c)); } catch (e) {}
   if (!getUrl()) { if (window.KPI_DEMO) useRaw(window.KPI_DEMO); else openSetup(false); }
   else refresh();
