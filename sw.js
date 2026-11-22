@@ -1,6 +1,6 @@
 // Mes KPI — garde l'appli en mémoire pour qu'elle s'ouvre vite.
 // Les chiffres, eux, sont toujours relus en direct dans le Google Sheet.
-const CACHE = 'mes-kpi-v18';
+const CACHE = 'mes-kpi-v19';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
@@ -14,7 +14,7 @@ self.addEventListener('activate', (e) => {
 // Toujours essayer la dernière version en ligne d'abord, sinon la copie en mémoire.
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (e.request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.includes('/budget/')) return;
   e.respondWith(
     fetch(e.request)
       .then((res) => {
