@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Mes KPI</title>
+<script>try{const p=JSON.parse(localStorage.getItem('kpi_prefs')||'{}');const r=document.documentElement;if(p.mode&&p.mode!=='auto')r.dataset.mode=p.mode;r.dataset.acc=p.acc||'koesio';if(p.texte==='grand')r.dataset.text='grand';}catch(e){}</script>
 <style>
 :root{
   color-scheme:light;
@@ -22,12 +23,18 @@
   --ok:#0ca30c;--warn:#fab219;--bad:#d03b3b;--ok-t:#0a7a0a;--warn-t:#9a6200;--bad-t:#c02f2f;
   --r:16px;--shadow:0 1px 2px rgba(20,20,19,.05),0 2px 8px rgba(20,20,19,.04);
 }
-@media (prefers-color-scheme:dark){:root{
+@media (prefers-color-scheme:dark){:root:not([data-mode=clair]){
   color-scheme:dark;
   --bg:#19132f;--card:#241b42;--line:#372c5e;--ink:#f1eef8;--ink2:#c9c1e0;--ink3:#958cb5;--tabon:#c39be0;--navy2:#8a4fb0;
   --c-mte:#3987e5;--c-achat:#d95926;--c-pts:#199e70;--c-jaune:#c98500;--c-mag:#d55181;--c-vert:#0ca30c;--c-vio:#9085e9;
   --ok-t:#4fd14f;--warn-t:#fab219;--bad-t:#ff8080;--shadow:none;
 }}
+:root[data-mode=sombre]{
+  color-scheme:dark;
+  --bg:#19132f;--card:#241b42;--line:#372c5e;--ink:#f1eef8;--ink2:#c9c1e0;--ink3:#958cb5;--tabon:#c39be0;--navy2:#8a4fb0;
+  --c-mte:#3987e5;--c-achat:#d95926;--c-pts:#199e70;--c-jaune:#c98500;--c-mag:#d55181;--c-vert:#0ca30c;--c-vio:#9085e9;
+  --ok-t:#4fd14f;--warn-t:#fab219;--bad-t:#ff8080;--shadow:none;
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;overscroll-behavior-y:none}
@@ -35,7 +42,7 @@ button{font:inherit;color:inherit}
 .hide{display:none!important}
 
 /* En-tête */
-.top{position:sticky;top:0;z-index:5;background:linear-gradient(160deg,#4a2361 0%,#6E388D 100%);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 16px 12px;box-shadow:0 2px 10px rgba(110,56,141,.3)}
+.top{position:sticky;top:0;z-index:5;background:linear-gradient(160deg,var(--hd1,#4a2361) 0%,var(--hd2,#6E388D) 100%);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 16px 12px;box-shadow:0 2px 10px rgba(110,56,141,.3)}
 .top-row{display:flex;align-items:center;gap:10px}
 .top h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;flex:1}
 .maj{font-size:12px;opacity:.8;margin-top:1px}
@@ -73,7 +80,7 @@ main{padding:16px 16px calc(84px + env(safe-area-inset-bottom));max-width:720px;
 .bar div{height:100%;border-radius:3px}
 .ok-bg{background:var(--ok)}.warn-bg{background:var(--warn)}.bad-bg{background:var(--bad)}
 .ok-t{color:var(--ok-t)}.warn-t{color:var(--warn-t)}.bad-t{color:var(--bad-t)}
-.hero{background:linear-gradient(150deg,#4a2361,#6E388D);color:#fff;border:0}
+.hero{background:linear-gradient(150deg,var(--hd1,#4a2361),var(--hd2,#6E388D));color:#fff;border:0}
 .hero .lab{color:rgba(255,255,255,.85)}
 .hero .big{font-size:32px}
 .hero .meta{color:rgba(255,255,255,.75)}
@@ -144,7 +151,7 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 
 /* Messages */
 .banner{background:#fff4d6;color:#6b4a00;border-radius:12px;padding:10px 12px;font-size:13px}
-@media (prefers-color-scheme:dark){.banner{background:#3a2e10;color:#ffd77a}}
+@media (prefers-color-scheme:dark){:root:not([data-mode=clair]) .banner{background:#3a2e10;color:#ffd77a}}
 .setup{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;padding:calc(env(safe-area-inset-top) + 28px) 22px 40px}
 .setup h2{font-size:26px;margin:14px 0 8px}
 .setup p{color:var(--ink2);margin:0 0 14px}
@@ -229,6 +236,25 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 .fgrid > div{min-width:0}
 .form .grp{margin:18px 0 0}
 .form .req{color:var(--bad-t)}
+
+:root[data-acc=bleu]{--hd1:#0d2d5e;--hd2:#1c5cab;--navy2:#1c5cab;--tabon:#1c5cab}
+:root[data-acc=vert]{--hd1:#06362a;--hd2:#047857;--navy2:#047857;--tabon:#047857}
+:root[data-acc=rouge]{--hd1:#5a1220;--hd2:#b3263e;--navy2:#b3263e;--tabon:#b3263e}
+:root[data-acc=anthracite]{--hd1:#1c1f26;--hd2:#3b414d;--navy2:#3b414d;--tabon:#3b414d}
+@media (prefers-color-scheme:dark){:root:not([data-mode=clair])[data-acc]:not([data-acc=koesio]){--tabon:#c9d2ff}}
+:root[data-mode=sombre][data-acc]:not([data-acc=koesio]){--tabon:#c9d2ff}
+:root[data-text=grand]{font-size:17px}
+:root[data-text=grand] body{font-size:17px}
+body.discret main .big, body.discret main .it-v, body.discret main b, body.discret main .meta, body.discret main .it-s, body.discret .chip-v, body.discret main .info, body.discret main td.n{filter:blur(7px)}
+.tabbar button[hidden]{display:none}
+.colors{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+.colors button{width:38px;height:38px;border-radius:50%;border:3px solid transparent;cursor:pointer}
+.colors button.on{border-color:var(--ink)}
+.set label.l{display:block;font-size:13px;color:var(--ink2);margin:12px 0 4px}
+.set input.f{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;background:var(--card);color:var(--ink)}
+.set .sw{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
+.set .sw input{width:22px;height:22px;accent-color:var(--navy2)}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 </style>
 </head>
 <body>
@@ -436,11 +462,29 @@ function compute(raw) {
 const nowMois = CAL[new Date().getMonth()];
 const S = {tab: 'resume', metric: 'mt', tri: TRI[nowMois] || 'T1', moisPrev: nowMois, sel: -1, pType: '', pTri: '', aMois: '', aStatut: '', aMin: 0, aTri: 'saisie', aAdmin: '', per: 'annee', more: {}, q: ''};
 try { S.per = localStorage.getItem('kpi_per') || 'annee'; } catch (e) {}
+const PREFS_DEF = {mode: 'auto', acc: 'koesio', texte: 'normal', tabDef: 'resume', perDef: 'dernier', cache: [], discret: false, auto: 0};
+let P = Object.assign({}, PREFS_DEF);
+try { P = Object.assign(P, JSON.parse(localStorage.getItem('kpi_prefs') || '{}')); } catch (e) {}
+if (P.perDef !== 'dernier') S.per = P.perDef;
+function savePrefs() { try { localStorage.setItem('kpi_prefs', JSON.stringify(P)); } catch (e) {} applyPrefs(); }
+function applyPrefs() {
+  const r = document.documentElement;
+  if (P.mode === 'auto') r.removeAttribute('data-mode'); else r.dataset.mode = P.mode;
+  r.dataset.acc = P.acc;
+  if (P.texte === 'grand') r.dataset.text = 'grand'; else r.removeAttribute('data-text');
+  document.body.classList.toggle('discret', !!P.discret);
+  const btns = [...document.querySelectorAll('.tabbar button')];
+  btns.forEach((b) => { b.hidden = b.dataset.tab !== 'resume' && P.cache.includes(b.dataset.tab); });
+  document.querySelector('.tabbar').style.gridTemplateColumns = `repeat(${btns.filter((b) => !b.hidden).length},1fr)`;
+  clearInterval(window.__auto);
+  if (P.auto > 0) window.__auto = setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, P.auto * 60000);
+}
 S.mois = MOIS.includes(nowMois) ? nowMois : 'Avril';
 S.triSel = TRI[S.mois] || 'T1';
 S.vue = 'mois'; S.pvTri = 'pct'; S.sim = new Set(); S.aFam = ''; S.vSel = -1;
 const ORDRE_T = ['T1','T2','T3','T4'];
-try { S.tab = sessionStorage.getItem('kpi_tab') || 'resume'; } catch (e) {}
+try { S.tab = sessionStorage.getItem('kpi_tab') || P.tabDef || 'resume'; } catch (e) {}
+if (P.cache.includes(S.tab)) S.tab = 'resume';
 let D = null, RAW = null, lastFetch = 0, loading = false;
 
 /* ---------- Rendu ---------- */
@@ -1473,7 +1517,77 @@ $('setup-ok').addEventListener('click', () => {
   refresh();
 });
 $('setup-cancel').addEventListener('click', () => $('setup').classList.add('hide'));
-$('btn-setup').addEventListener('click', () => openSetup(true));
+$('btn-setup').addEventListener('click', () => openReglages());
+const PARAMS = [
+  ['Objectif MTE annuel €', 'Objectif MTE annuel', 'eur'], ['Objectif Achat annuel €', 'Objectif achat annuel', 'eur'], ['Objectif Points annuel', 'Objectif points annuel', 'num'],
+  ['Taux prime trimestrielle (% MTE réalisée)', 'Taux prime MTE', 'pct'], ['Seuil de déclenchement de la prime (% objectif trimestriel MTE)', 'Seuil prime MTE', 'pct'],
+  ['Taux prime achat trimestrielle (% achat réalisé)', 'Taux prime achat', 'pct'], ['Seuil de déclenchement de la prime achat (% objectif trimestriel achat)', 'Seuil prime achat', 'pct'],
+  ['Prime points annuelle (€)', 'Prime points annuelle', 'eur'], ['Seuil d\'atteinte minimum (prime points)', 'Seuil mini prime points', 'pct'], ['Pente du barème de versement (prime points)', 'Pente du barème points', 'num'], ['Plafond de versement (prime points)', 'Plafond prime points', 'pct'],
+  ['Taux commission Lead GRC - Client', 'Ta part sur lead GRC client', 'pct'], ['Taux commission Lead GRC - Prospect', 'Ta part sur lead GRC prospect', 'pct']
+];
+function paramVals() {
+  const m = {};
+  (RAW && RAW.objectif || []).forEach((r) => { const k = txt(r[13]); if (k) m[k] = r[14]; });
+  return m;
+}
+function openReglages() {
+  const pv = paramVals();
+  const show = (v, t) => (typeof v !== 'number' ? '' : t === 'pct' ? String(Math.round(v * 10000) / 100).replace('.', ',') : String(v).replace('.', ','));
+  const tabs = [['prev', 'Prévisions'], ['primes', 'Primes'], ['affaires', 'Affaires'], ['clients', 'Clients'], ['saisie', 'Saisie']];
+  const seg = (id, opts, cur) => `<div class="seg" id="${id}">${opts.map(([v, t]) => `<button data-v="${v}" class="${cur === v ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+  const sel = (id, opts, cur) => `<select id="${id}">${opts.map(([v, t]) => `<option value="${v}" ${String(cur) === String(v) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+  openSheet('<h2 class="h2">Réglages</h2><div class="meta">Tout se règle ici, sans passer par Claude</div>', `<div class="set">
+    <p class="grp" style="margin-top:14px">Affichage</p>
+    <label class="l">Apparence</label>${seg('st-mode', [['auto', 'Auto'], ['clair', 'Clair'], ['sombre', 'Sombre']], P.mode)}
+    <label class="l">Couleur</label><div class="colors" id="st-acc">${[['koesio', '#6E388D'], ['bleu', '#1c5cab'], ['vert', '#047857'], ['rouge', '#b3263e'], ['anthracite', '#3b414d']].map(([v, c]) => `<button data-v="${v}" aria-label="${v}" style="background:${c}" class="${P.acc === v ? 'on' : ''}"></button>`).join('')}</div>
+    <label class="l">Taille du texte</label>${seg('st-texte', [['normal', 'Normale'], ['grand', 'Grande']], P.texte)}
+    <label class="sw"><span>Mode discret (montants floutés)</span><input type="checkbox" id="st-discret" ${P.discret ? 'checked' : ''}></label>
+    <p class="grp" style="margin-top:18px">À l'ouverture</p>
+    <label class="l">Onglet affiché</label>${sel('st-tab', [['resume', 'Résumé'], ...tabs], P.tabDef)}
+    <label class="l">Période du bandeau</label>${sel('st-per', [['dernier', 'La dernière utilisée'], ['annee', 'Année'], ['tri', 'Trimestre en cours'], ['mois', 'Mois en cours']], P.perDef)}
+    <label class="l">Actualiser automatiquement</label>${sel('st-auto', [[0, 'À chaque ouverture seulement'], [5, 'Toutes les 5 minutes'], [15, 'Toutes les 15 minutes'], [60, 'Toutes les heures']], P.auto)}
+    <p class="grp" style="margin-top:18px">Onglets visibles</p>
+    ${tabs.map(([v, t]) => `<label class="sw"><span>${t}</span><input type="checkbox" data-tabvis="${v}" ${P.cache.includes(v) ? '' : 'checked'}></label>`).join('')}
+    <p class="grp" style="margin-top:18px">Objectifs et règles de primes</p>
+    <p class="note" style="margin:0">Écrits directement dans ta feuille « Objectif annuel ». Tout se recalcule automatiquement. Pourcentages en % (ex. 2 pour 2 %).</p>
+    <div class="pgrid">${PARAMS.filter(([k]) => k in pv).map(([k, lab, t]) => `<div><label class="l">${esc(lab)}${t === 'pct' ? ' (%)' : t === 'eur' ? ' (€)' : ''}</label><input class="f" inputmode="decimal" data-param="${esc(k)}" data-pt="${t}" value="${esc(show(pv[k], t))}"></div>`).join('')}</div>
+    <button class="btn" data-saveparams style="margin-top:14px">Enregistrer les objectifs et règles</button>
+    <p class="grp" style="margin-top:18px">Connexion</p>
+    <button class="more" data-lien>Modifier le lien de mes données</button>
+  </div>`, 'Réglages');
+  const box = $('fiche');
+  const segOn = (id, key, after) => { $(id).onclick = (e) => { const b = e.target.closest('button'); if (!b) return; P[key] = b.dataset.v; $(id).querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); savePrefs(); if (after) after(); }; };
+  segOn('st-mode', 'mode'); segOn('st-texte', 'texte', () => D && renderAll());
+  $('st-acc').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; P.acc = b.dataset.v; $('st-acc').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); savePrefs(); };
+  $('st-discret').onchange = (e) => { P.discret = e.target.checked; savePrefs(); };
+  $('st-tab').onchange = (e) => { P.tabDef = e.target.value; savePrefs(); toast('Enregistré ✓'); };
+  $('st-per').onchange = (e) => { P.perDef = e.target.value; if (P.perDef !== 'dernier') { S.per = P.perDef; renderStrip(); } savePrefs(); toast('Enregistré ✓'); };
+  $('st-auto').onchange = (e) => { P.auto = Number(e.target.value); savePrefs(); toast('Enregistré ✓'); };
+  box.querySelectorAll('[data-tabvis]').forEach((c) => { c.onchange = () => { const v = c.dataset.tabvis; P.cache = c.checked ? P.cache.filter((x) => x !== v) : [...new Set([...P.cache, v])]; if (P.cache.includes(S.tab)) showTab('resume', false); savePrefs(); }; });
+  box.querySelector('[data-lien]').onclick = () => { closeFiche(); openSetup(true); };
+  box.querySelector('[data-saveparams]').onclick = async () => {
+    const url = getUrl(); if (!url) return;
+    const ch = [];
+    for (const i of box.querySelectorAll('[data-param]')) {
+      const k = i.dataset.param, t = i.dataset.pt, v0 = show(pv[k], t), v = i.value.trim();
+      if (v === v0) continue;
+      let n = Number(v.replace(/\s|€|%/g, '').replace(',', '.'));
+      if (v === '' || isNaN(n)) { toast(k + ' : nombre invalide', true); return; }
+      if (t === 'pct') n = n / 100;
+      ch.push([k, n]);
+    }
+    if (!ch.length) { toast('Aucune modification'); return; }
+    toast('Enregistrement…');
+    try {
+      for (const [k, n] of ch) {
+        const r = await (await fetch(url + '&' + new URLSearchParams({action: 'param', label: k, valeur: String(n)}).toString(), {cache: 'no-store'})).json();
+        if (r.objectif) throw new Error('mets à jour ton script Google (voir le guide)');
+        if (r.error) throw new Error(r.error);
+      }
+      await refresh(); toast(ch.length + ' réglage' + (ch.length > 1 ? 's' : '') + ' enregistré' + (ch.length > 1 ? 's' : '') + ' ✓');
+    } catch (e) { toast('Pas enregistré : ' + e.message, true); }
+  };
+}
 $('btn-refresh').addEventListener('click', () => refresh());
 $('btn-search').addEventListener('click', () => { if (!D) return; showTab('clients', true); const i = document.querySelector('[data-csearch]'); if (i) i.focus(); });
 
@@ -1580,6 +1694,7 @@ window.addEventListener('touchend', (e) => { if (y0 != null && e.changedTouches[
 
 /* ---------- Démarrage ---------- */
 (function start() {
+  applyPrefs();
   // Le lien de l'icône ne remplace le lien enregistré que s'il est nouveau (sinon le réglage ⚙︎ est conservé)
   const fromLink = urlFromParams();
   let last = null;
