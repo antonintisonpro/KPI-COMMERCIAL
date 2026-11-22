@@ -1170,7 +1170,8 @@ function renderSaisie() {
       <button class="btn" data-ed-save style="margin-top:18px">${S.ed.mode === 'new' ? 'Ajouter au Sheet' : 'Enregistrer les modifications'}</button>
       <p class="note" style="margin:10px 0 0">Les colonnes calculées (statut, commission finale, points, base MRM) se mettent à jour seules dans le Sheet.</p>
     </div>` : '<div class="card"><div class="empty">Choisis un dossier à modifier.</div></div>';
-  el.innerHTML = `
+  const back = S.edFrom ? `<button class="more" style="margin:0 0 10px;text-align:left" data-ed-back>‹ Retour ${esc({resume: 'au Résumé', prev: 'aux Prévisions', primes: 'aux Primes', affaires: 'aux Affaires', clients: 'aux Clients'}[S.edFrom.tab] || '')}${S.edFrom.fiche ? ' (fiche du dossier)' : ''}</button>` : '';
+  el.innerHTML = `${back}
     <div>
       <h2 class="h2">Saisie</h2>
       <p class="sub">Corrige un dossier ou ajoute une affaire : c'est écrit directement dans ton Google Sheet.</p>
@@ -1181,6 +1182,15 @@ function renderSaisie() {
       ${S.ed.mode === 'edit' ? `<select data-ed-id aria-label="Dossier">${opt('', lm.length ? 'Choisir un dossier…' : 'Aucun dossier ce mois-ci', S.ed.id)}${lm.map((x) => opt(x.id, `${x.client} · ${x.signature == null ? '—' : pct(x.signature)} · ${fE.format(x.mte)}`, S.ed.id)).join('')}</select>` : ''}
     </div>
     ${form}`;
+}
+function edBack() {
+  const f = S.edFrom;
+  S.edFrom = null; S.edDirty = false;
+  if (!f) return;
+  showTab(f.tab, false);
+  window.scrollTo(0, f.y || 0);
+  if (f.fiche && D.affaires.some((x) => x.id === f.fiche)) openFiche(f.fiche);
+  renderSaisie();
 }
 function numFr(v) { const t = String(v).replace(/\s| |€/g, '').replace(',', '.'); return t === '' ? '' : Number(t); }
 async function saveSaisie() {
@@ -1458,7 +1468,8 @@ document.addEventListener('click', (ev) => {
   const fb = ev.target.closest('#fiche');
   if (fb && (ev.target === fb || ev.target.closest('[data-close]'))) { closeFiche(); return; }
   const mod = ev.target.closest('[data-modifier]');
-  if (mod) { const a = D.affaires.find((x) => x.id === mod.dataset.modifier); closeFiche(); if (a) { S.ed = {mode: 'edit', mois: a.mois, id: a.id}; showTab('saisie', true); renderSaisie(); } return; }
+  if (mod) { const a = D.affaires.find((x) => x.id === mod.dataset.modifier); const from = {tab: S.tab, y: window.scrollY, fiche: a && a.id}; closeFiche(); if (a) { S.ed = {mode: 'edit', mois: a.mois, id: a.id}; S.edFrom = from; showTab('saisie', true); renderSaisie(); } return; }
+  if (ev.target.closest('[data-ed-back]')) { edBack(); return; }
   const es = ev.target.closest('[data-edit-seg] button');
   if (es) { const box = es.closest('[data-edit]'); saveChamp(box.dataset.edit, es.parentElement.dataset.editSeg, es.dataset.v); return; }
   const ec = ev.target.closest('[data-edit-save]');
@@ -1479,7 +1490,7 @@ document.addEventListener('click', (ev) => {
   }
   if (fb && !ev.target.closest('.it[data-id]')) return;
   const t = ev.target.closest('[data-tab]');
-  if (t) { showTab(t.dataset.tab, true); return; }
+  if (t) { const vers = t.dataset.tab === 'saisie' && S.tab !== 'saisie'; if (vers) S.edFrom = null; showTab(t.dataset.tab, true); if (vers) renderSaisie(); return; }
   const pe = ev.target.closest('[data-per]');
   if (pe) { S.per = pe.dataset.per; try { localStorage.setItem('kpi_per', S.per); } catch (e) {} renderStrip(); return; }
   const mo = ev.target.closest('[data-more]');
