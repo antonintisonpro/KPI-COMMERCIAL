@@ -633,7 +633,7 @@ function renderResume() {
         <div class="card"><span class="lab">Affaires signées</span><div class="big">${r.signees}</div></div>
         <div class="card"><span class="lab">Clients signés</span><div class="big">${r.clients}</div></div>
         <div class="card"><span class="lab">Panier moyen</span><div class="big">${fE.format(r.panier)}</div></div>
-        <div class="card"><span class="lab">Commission brute</span><div class="big">${fE.format(r.commission)}</div></div>
+        <div class="card"><span class="lab">Commission finale</span><div class="big">${fE.format(r.commission)}</div></div>
         <div class="card"><span class="lab">MTE hors Print</span><div class="big">${pct(r.hors_print)}</div></div>
         <div class="card"><span class="lab">Sur prospects</span><div class="big">${pct(r.prospects)}</div></div>
         <div class="card"><span class="lab">Via lead GRC</span><div class="big">${pct(r.grc)}</div></div>
@@ -760,7 +760,7 @@ function renderPrev() {
   const l = D.affaires.filter((a) => a.mois === S.moisPrev);
   const signes = triPv(l.filter((a) => num(a.signature) >= 1));
   const sAdm = signes.filter((a) => a.administre), sNon = signes.filter((a) => !a.administre);
-  const detail = (a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''));
+  const detail = (a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. finale ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''));
   const sous = (titre, key, list, vide) => `<p class="grp" style="margin:14px 0 2px">${titre} · ${list.length}</p><div class="items">${list.length ? capped(key, list, 5, detail) : '<div class="empty">' + vide + '</div>'}</div>`;
   const bdc = bdcInfo(S.moisPrev);
   const prev = triPv(l.filter((a) => num(a.signature) >= 0.8 && num(a.signature) < 1));
@@ -786,14 +786,14 @@ function renderPrev() {
       ${prevCard('Achat', 'var(--c-achat)', 'prev_achat', 'pot_achat', 'eur')}
       ${prevCard('Points', 'var(--c-pts)', 'prev_points', 'pot_points', 'num')}
       ${prevCard('Challenge National', 'var(--c-vio)', 'prev_challenge', 'pot_challenge', 'num')}
-      ${prevCard('Commission brute', 'var(--c-mag)', 'prev_commission', 'pot_commission', 'eur')}
+      ${prevCard('Commission finale', 'var(--c-mag)', 'prev_commission', 'pot_commission', 'eur')}
       ${prevCard("Nombre d'affaires", 'var(--c-vert)', 'prev_nb', 'pot_nb', 'int')}
     </div>
     <div class="card" style="--a:var(--c-mte)">
       <h2 class="h2">Simulateur : si je signe…</h2>
       <p class="sub">Coche les affaires de ${esc(S.moisPrev.toLowerCase())} que tu penses signer : l'impact s'affiche en dessous.</p>
       <div class="btns"><button class="more" data-simall="prev">Cocher les 80–99 %</button><button class="more" data-simall="none">Tout décocher</button></div>
-      <div style="margin-top:8px">${cands.length ? capped('sim', cands, 6, (a) => `<label class="simrow"><input type="checkbox" data-sim="${esc(a.id)}" ${S.sim.has(a.id) ? 'checked' : ''}><span class="sim-c">${esc(a.client)}<small>${a.signature == null ? '—' : pct(a.signature)} · ${esc(a.metier)} · com. ${fE.format(a.commission)}</small></span><b>${fE.format(a.mte)}</b></label>`) : '<div class="empty">Aucune affaire en cours ce mois-ci.</div>'}</div>
+      <div style="margin-top:8px">${cands.length ? capped('sim', cands, 6, (a) => `<label class="simrow"><input type="checkbox" data-sim="${esc(a.id)}" ${S.sim.has(a.id) ? 'checked' : ''}><span class="sim-c">${esc(a.client)}<small>${a.signature == null ? '—' : pct(a.signature)} · ${esc(a.metier)} · com. finale ${fE.format(a.commission)}</small></span><b>${fE.format(a.mte)}</b></label>`) : '<div class="empty">Aucune affaire en cours ce mois-ci.</div>'}</div>
       <div class="simres" id="sim-res"></div>
     </div>
     <div class="inline"><span>Trier les listes par</span><select data-sel="pvTri" aria-label="Tri des listes">${opt('pct', '% de signature')}${opt('mte', 'MTE')}${opt('com', 'Commission')}</select></div>
@@ -805,17 +805,17 @@ function renderPrev() {
     <div class="card">
       <h2 class="h2">En prévision (80 à 99 %)</h2>
       <p class="sub">${prev.length} affaire${prev.length > 1 ? 's' : ''} · commission : ${fE.format(prev.reduce((s, a) => s + a.commission, 0))}</p>
-      <div class="items">${prev.length ? capped('p-prev', prev, 5, (a) => affItem(a, 'Com. ' + fE.format(a.commission))) : '<div class="empty">Aucune affaire entre 80 et 99 % ce mois-ci.</div>'}</div>
+      <div class="items">${prev.length ? capped('p-prev', prev, 5, (a) => affItem(a, 'Com. finale ' + fE.format(a.commission))) : '<div class="empty">Aucune affaire entre 80 et 99 % ce mois-ci.</div>'}</div>
     </div>
     <div class="card">
       <h2 class="h2">Plus loin (moins de 80 %)</h2>
       <p class="sub">Affaires en cours, pas encore en prévision.</p>
-      <div class="items">${loin.length ? capped('p-loin', loin, 5, (a) => affItem(a, 'Com. ' + fE.format(a.commission))) : '<div class="empty">Aucune.</div>'}</div>
+      <div class="items">${loin.length ? capped('p-loin', loin, 5, (a) => affItem(a, 'Com. finale ' + fE.format(a.commission))) : '<div class="empty">Aucune.</div>'}</div>
     </div>
     <div class="card cat" style="--a:var(--warn)">
       <h2 class="h2">À relancer</h2>
       <p class="sub">${relance.length} affaire${relance.length > 1 ? 's' : ''} des mois passés toujours en cours · MTE ${fE.format(relance.reduce((s, a) => s + a.mte, 0))}. Signée ou perdue ? Mets à jour le Sheet.</p>
-      <div class="items">${relance.length ? capped('relance', relance, 5, (a) => affItem(a, 'Com. ' + fE.format(a.commission))) : '<div class="empty">Rien à relancer : tout est à jour.</div>'}</div>
+      <div class="items">${relance.length ? capped('relance', relance, 5, (a) => affItem(a, 'Com. finale ' + fE.format(a.commission))) : '<div class="empty">Rien à relancer : tout est à jour.</div>'}</div>
     </div>
     <div class="card">
       <h2 class="h2">Taux de transformation</h2>
@@ -856,7 +856,7 @@ function renderSimRes() {
     <div class="row"><span>${esc(t.trimestre || '')} · Achat</span><span>${fleche(av.p_achat, ap.p_achat, pct)}</span></div>
     <div class="row"><span>${esc(t.trimestre || '')} · Points</span><span>${fleche(av.p_points, ap.p_points, pct)}</span></div>
     <div class="row"><span>Primes du ${esc(t.trimestre || '')} (hors MRM)</span><span>${fleche(av.total, ap.total, fE.format)}</span></div>
-    <div class="row"><span>Commission brute</span><span class="up">+${fE.format(d.com)}</span></div>
+    <div class="row"><span>Commission finale</span><span class="up">+${fE.format(d.com)}</span></div>
     <div class="row"><span>Prime BDC</span><span>${Math.min(bdc.nb, 5)}/5 → <b>${Math.min(nb2, 5)}/5</b>${gainBdc ? ` <span class="up">+${fE.format(gainBdc)}</span>` : bdc.prime ? ' ✓' : ''}</span></div>
     <div class="row"><span><b style="color:var(--ink)">Gain variable estimé</b></span><span class="up">+${fE.format(gain)}</span></div>`;
 }
@@ -911,7 +911,7 @@ function renderPrimes() {
     <div class="card hero">
       <span class="lab">Mon variable depuis avril</span>
       <div class="big">${fE.format(comTot + D.primesTotal)}</div>
-      <div class="meta">Commissions brutes ${fE.format(comTot)} + primes ${fE.format(D.primesTotal)}</div>
+      <div class="meta">Commissions finales ${fE.format(comTot)} + primes ${fE.format(D.primesTotal)}</div>
     </div>
     <div class="card">
       <h2 class="h2">Variable par mois</h2>
@@ -928,7 +928,7 @@ function renderPrimes() {
         <div class="row"><span>Prime MTE</span><span>${fleche(av.pm, ap.pm, fE.format)}</span></div>
         <div class="row"><span>Prime achat</span><span>${fleche(av.pa, ap.pa, fE.format)}</span></div>
         <div class="row"><span>Prime points</span><span>${fleche(av.pp, ap.pp, fE.format)}</span></div>
-        <div class="row"><span>Commission brute en plus</span><b class="up">+${fE.format(dq.com)}</b></div>
+        <div class="row"><span>Commission finale en plus</span><b class="up">+${fE.format(dq.com)}</b></div>
       </div>
     </div>
     <div class="card hero">
@@ -1036,7 +1036,7 @@ function renderClientList() {
   const idx = clientsIndex();
   const tot = idx.reduce((s2, c) => s2 + c.mte, 0) || 1;
   const row = (c, i) => `<div class="gs-row" data-client="${esc(c.key)}" role="button" tabindex="0">
-      <div style="min-width:0;display:flex;align-items:center">${i != null ? `<span class="rank">${i + 1}</span>` : ''}<div style="min-width:0"><div class="gs-n">${esc(c.nom)}</div><div class="gs-m">${c.sign} signée${c.sign > 1 ? 's' : ''}${c.cours ? ' · ' + c.cours + ' en cours' : ''}${c.mte ? ' · ' + pct(c.mte / tot) + ' de ta MTE' : ''}</div></div></div>
+      <div style="min-width:0;display:flex;align-items:center">${i != null ? `<span class="rank">${i + 1}</span>` : ''}<div style="min-width:0"><div class="gs-n">${esc(c.nom)}</div><div class="gs-m">${c.sign} signée${c.sign > 1 ? 's' : ''}${c.cours ? ' · ' + c.cours + ' en cours' : ''}${c.mte ? ' · ' + pct(c.mte / tot) + ' de ta MTE' : ''}</div>${c.sign ? `<div class="gs-m">Com. finale ${fE.format(c.com)}</div>` : ''}</div></div>
       <b>${fE.format(c.mte)} ›</b></div>`;
   if (!toks.length) {
     const top = idx.filter((c) => c.sign).sort((a, b) => b.mte - a.mte);
@@ -1062,7 +1062,7 @@ function renderAffList() {
   if (S.aTri === 'desc') l = [...l].sort((a, b) => b.mte - a.mte);
   if (S.aTri === 'asc') l = [...l].sort((a, b) => a.mte - b.mte);
   $('aff-count').textContent = l.length + ' affaire' + (l.length > 1 ? 's' : '') + ' · MTE ' + fE.format(l.reduce((s, a) => s + a.mte, 0)) + ' · touche une affaire pour le détail';
-  box.innerHTML = l.length ? capped('aff', l, 10, (a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''))) : '<div class="empty">Aucune affaire pour ce filtre.</div>';
+  box.innerHTML = l.length ? capped('aff', l, 10, (a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. finale ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''))) : '<div class="empty">Aucune affaire pour ce filtre.</div>';
 }
 
 /* ---------- Fiche d'une affaire ---------- */
@@ -1079,7 +1079,7 @@ function openFiche(id) {
     <div class="row" style="align-items:flex-start"><div style="min-width:0"><h2 class="h2">${esc(a.client)}</h2><div class="meta">${esc(a.mois)} · ${esc(a.metier)} · ${esc(a.type_client)}</div></div><button class="xbtn" data-close aria-label="Fermer">✕</button></div>
     <div class="g2" style="margin:14px 0 6px">
       <div class="card" style="padding:10px 12px"><span class="lab">MTE</span><div class="big" style="font-size:20px">${fE.format(a.mte)}</div></div>
-      <div class="card" style="padding:10px 12px"><span class="lab">Commission brute</span><div class="big" style="font-size:20px">${fE.format(a.commission)}</div></div>
+      <div class="card" style="padding:10px 12px"><span class="lab">Commission finale</span><div class="big" style="font-size:20px">${fE.format(a.commission)}</div></div>
     </div>
     ${kv('% signature', a.signature == null ? '' : pct(a.signature))}
     ${kv('Statut', a.statut)}
@@ -1095,7 +1095,7 @@ function openFiche(id) {
     ${kv('CA hard', vEur(a.ca_hard))}
     ${kv('Marge hard nette', vEur(a.marge_hard))}
     ${kv('Marge NEW (MRM)', vEur(a.marge_new))}
-    ${kv('Commission de base', fE.format(a.commission_base))}
+    ${kv('Commission de base (avant part GRC)', fE.format(a.commission_base))}
     ${kv('Base prime MRM', a.mrm_choix)}
     ${kv('Delta CA (New − Old)', vEur(a.delta))}
     ${kv('Base MRM retenue', vEur(a.mrm_base))}
@@ -1123,16 +1123,16 @@ function openListe(kind) {
   const lbl = {mt: 'MTE signée', achat: 'Achat signé', points: 'Points signés'}[k];
   const per = scope === 'an' ? 'depuis avril' : moisRow().mois.toLowerCase();
   openSheet(`<h2 class="h2">${lbl} · ${esc(per)}</h2><div class="meta">${l.length} affaire${l.length > 1 ? 's' : ''} · total ${fmt(l.reduce((s2, a) => s2 + a[f], 0))}</div>`,
-    `<div class="items" style="margin-top:10px">${l.map((a) => affItem(a, 'MTE ' + fE.format(a.mte) + ' · Com. ' + fE.format(a.commission), fmt(a[f]))).join('') || '<div class="empty">Aucune affaire signée.</div>'}</div>`, lbl);
+    `<div class="items" style="margin-top:10px">${l.map((a) => affItem(a, 'MTE ' + fE.format(a.mte) + ' · Com. finale ' + fE.format(a.commission), fmt(a[f]))).join('') || '<div class="empty">Aucune affaire signée.</div>'}</div>`, lbl);
 }
 const cleS = (x) => cle(x).replace(/[^a-z0-9]+/g, ' ').trim();
 function clientsIndex() {
   const m = new Map();
   D.affaires.forEach((a) => {
     const k = cle(a.client);
-    const r = m.get(k) || {key: k, nom: txt(a.client), s: cleS(a.client), nb: 0, sign: 0, cours: 0, mte: 0, last: -1, lastMois: ''};
+    const r = m.get(k) || {key: k, nom: txt(a.client), s: cleS(a.client), nb: 0, sign: 0, cours: 0, mte: 0, com: 0, last: -1, lastMois: ''};
     r.nb++;
-    if (num(a.signature) >= 1) { r.sign++; r.mte += a.mte; }
+    if (num(a.signature) >= 1) { r.sign++; r.mte += a.mte; r.com += a.commission; }
     if (a.statut === 'En cours') r.cours++;
     const i = MOIS.indexOf(a.mois);
     if (i > r.last) { r.last = i; r.lastMois = a.mois; }
@@ -1161,7 +1161,7 @@ function renderGSearch() {
   if (dossiers.length) h += '<p class="grp" style="margin:14px 0 2px">Dossiers</p><div class="items">' + dossiers.slice(0, 10).map((a) => affItem(a, 'N° ' + esc(a.projet))).join('') + '</div>';
   h += `<p class="grp" style="margin:14px 0 2px">${toks.length ? n + ' client' + (n > 1 ? 's' : '') : 'Tous tes clients (' + n + ')'}</p>`;
   h += n ? '<div>' + cl.slice(0, 40).map((c) => `<div class="gs-row" data-client="${esc(c.key)}" role="button" tabindex="0">
-      <div style="min-width:0"><div class="gs-n">${esc(c.nom)}</div><div class="gs-m">${c.nb} affaire${c.nb > 1 ? 's' : ''} · ${c.sign} signée${c.sign > 1 ? 's' : ''}${c.cours ? ' · ' + c.cours + ' en cours' : ''} · ${esc(c.lastMois)}</div></div>
+      <div style="min-width:0"><div class="gs-n">${esc(c.nom)}</div><div class="gs-m">${c.nb} affaire${c.nb > 1 ? 's' : ''} · ${c.sign} signée${c.sign > 1 ? 's' : ''}${c.cours ? ' · ' + c.cours + ' en cours' : ''} · ${esc(c.lastMois)}${c.sign ? ' · com. finale ' + fE.format(c.com) : ''}</div></div>
       <b>${fE.format(c.mte)} ›</b></div>`).join('') + '</div>' + (n > 40 ? '<p class="note">Affine ta recherche pour voir les autres.</p>' : '')
     : '<div class="empty">Aucun client ne correspond.</div>';
   box.innerHTML = h;
@@ -1184,7 +1184,7 @@ function openClient(key) {
   openSheet(`${back}<h2 class="h2">${esc(nom)}</h2><div class="meta">${esc(type)} · ${l.length} affaire${l.length > 1 ? 's' : ''} · ${g.length} signée${g.length > 1 ? 's' : ''}</div><div class="tags">${fams.map((f) => `<span class="tag">${esc(f)}</span>`).join('')}</div>`,
     `<div class="g2" style="margin:14px 0 6px">
       ${cell('MTE signée', fE.format(sum(g, 'mte')))}
-      ${cell('Commission brute', fE.format(sum(g, 'commission')))}
+      ${cell('Commission finale', fE.format(sum(g, 'commission')))}
       ${cell('Achat signé', fE.format(sum(g, 'achat')))}
       ${cell('Points', fN.format(sum(g, 'points')))}
     </div>
@@ -1195,8 +1195,8 @@ function openClient(key) {
     ${kv('Administration', g.length ? (aAdm ? aAdm + ' à administrer' : 'Tout est administré') : '')}
     ${kv('Première affaire', esc(l[0].mois))}
     ${kv('Dernière affaire', esc(l[l.length - 1].mois))}
-    ${list('Signées', g, (a) => 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''))}
-    ${list('En cours', ec, (a) => 'Com. ' + fE.format(a.commission))}
+    ${list('Signées', g, (a) => 'Achat ' + fE.format(a.achat) + ' · Com. finale ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''))}
+    ${list('En cours', ec, (a) => 'Com. finale ' + fE.format(a.commission))}
     ${list('Perdues', pe, () => '')}`, nom);
 }
 function closeFiche() { const f = $('fiche'); if (f) f.remove(); document.body.style.overflow = ''; }
