@@ -137,8 +137,8 @@ select{appearance:none;-webkit-appearance:none;width:100%;border:1px solid var(-
 details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 
 /* Barre d'onglets */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,1fr);background:color-mix(in srgb,var(--card) 88%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
-.tabbar button{appearance:none;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;font-size:11px;color:var(--ink3);cursor:pointer}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(6,1fr);background:color-mix(in srgb,var(--card) 88%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.tabbar button{appearance:none;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;font-size:10.5px;color:var(--ink3);cursor:pointer}
 .tabbar svg{width:24px;height:24px}
 .tabbar button.on{color:var(--tabon);font-weight:600}
 
@@ -222,6 +222,13 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 .xbtn{width:36px;height:36px;font-size:16px}
 .closebar{position:sticky;bottom:calc(-24px - env(safe-area-inset-bottom));margin:16px -20px calc(-24px - env(safe-area-inset-bottom));padding:10px 20px calc(14px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
 .closebar .more{margin:0}
+.form label{display:block;font-size:13px;color:var(--ink2);margin:12px 0 4px}
+.form input,.form textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:16px;background:var(--card);color:var(--ink);-webkit-appearance:none}
+.form textarea{min-height:70px;resize:vertical}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.fgrid > div{min-width:0}
+.form .grp{margin:18px 0 0}
+.form .req{color:var(--bad-t)}
 </style>
 </head>
 <body>
@@ -251,6 +258,7 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
   <section class="panel hide" id="p-primes"></section>
   <section class="panel hide" id="p-affaires"></section>
   <section class="panel hide" id="p-clients"></section>
+  <section class="panel hide" id="p-saisie"></section>
 </main>
 
 <nav class="tabbar" aria-label="Sections">
@@ -259,6 +267,7 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
   <button data-tab="primes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7.5A6.5 6.5 0 1 0 18 16.5"/><path d="M4 10.5h9M4 13.5h9"/></svg>Primes</button>
   <button data-tab="affaires"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>Affaires</button>
   <button data-tab="clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg>Clients</button>
+  <button data-tab="saisie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Saisie</button>
 </nav>
 
 <div class="setup hide" id="setup">
@@ -332,7 +341,7 @@ function parse(raw) {
         achat: num(r[9]), mte: num(r[12]), commission_base: num(r[14]), commission: num(r[15]), points: num(r[16]),
         administre: txt(r[19]).toLowerCase() === 'oui', admin_txt: txt(r[19]),
         nouveau: txt(r[2]), projet: txt(r[3]), produit: txt(r[7]), ca_hard: r[10], marge_hard: r[11], marge_new: r[13],
-        quantite: r[17], challenge: r[18], commentaire: txt(r[20]), perdue: txt(r[24]), mrm_choix: txt(r[21]), delta: r[22], mrm_base: r[23]
+        quantite: r[17], challenge: r[18], commentaire: txt(r[20]), perdue: txt(r[24]), row: r, ligne: i + 1, mrm_choix: txt(r[21]), delta: r[22], mrm_base: r[23]
       });
     }
     const g = (row, col) => num((rows[row - 1] || [])[col]);
@@ -1121,6 +1130,88 @@ async function saveChamp(id, champ, valeur) {
     if ($('fiche')) openFiche(id);
   } catch (e) { toast('Pas enregistré : ' + e.message, true); }
 }
+/* ---------- Onglet Saisie ---------- */
+const PRODUITS = ['MFP A4 C (+de 40 PPM)', 'MFP A3 NB', 'MFP A3 Couleur', 'MFP A3 Couleur + 40 PMM', 'Solution ISI Sup + 120 € / mois', 'Solution ISI Mois - 120 € / mois', 'Koesio TV', 'ISI Screen Touch', 'Agent Managé', 'FTTO'];
+const COLI = {A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, R: 17, S: 18, T: 19, U: 20, V: 21, W: 22, Y: 24};
+const FORM = [
+  ['Le dossier', [['A', 'Client', 'text', null, true], ['D', 'N° de projet', 'text'], ['E', 'Métier', 'sel', ['PRINT', 'Informatique', 'Solution', 'Audiovisuel', 'Télécom']], ['F', 'Client / Prospect', 'sel', ['Client', 'Prospect']], ['G', 'Lead GRC', 'sel', ['Non', 'Oui']], ['C', 'Nouveau métier', 'sel', ['NON', 'OUI']], ['H', 'Type produit (points)', 'sel', PRODUITS], ['R', 'Quantité', 'num']]],
+  ['Statut', [['B', '% signature', 'pct'], ['T', 'Dossier administré', 'sel', ['Oui', 'Non']], ['Y', 'Affaire perdue ?', 'sel', ['Non', 'Oui']]]],
+  ['Montants', [['J', 'Achat (€)', 'num'], ['K', 'CA hard (€)', 'num'], ['L', 'Marge hard nette (€)', 'num'], ['M', 'MTE (€)', 'num'], ['N', 'Marge NEW / MRM (€)', 'num'], ['O', 'Commission de base (€)', 'num'], ['S', 'Points Challenge National', 'num']]],
+  ['Prime MRM', [['V', 'Base prime MRM', 'sel', ['MRM', 'Delta CA x1,5']], ['W', 'Delta CA New − Old (€)', 'num']]],
+  ['Commentaire', [['U', 'Commentaire', 'area']]]
+];
+S.ed = {mode: 'edit', mois: '', id: ''};
+function vInit(a, col, type) {
+  const v = a ? a.row[COLI[col]] : '';
+  if (type === 'pct') return typeof v === 'number' ? String(Math.round(v * 100)) : '';
+  if (type === 'num') return typeof v === 'number' ? String(v).replace('.', ',') : txt(v);
+  return txt(v);
+}
+function renderSaisie() {
+  const el = $('p-saisie');
+  if (!el || !D) return;
+  S.edDirty = false;
+  if (!S.ed.mois) S.ed.mois = S.mois;
+  const lm = D.affaires.filter((a) => a.mois === S.ed.mois);
+  let a = S.ed.mode === 'edit' ? lm.find((x) => x.id === S.ed.id) : null;
+  const field = ([col, lab, type, opts, req]) => {
+    const v = S.ed.mode === 'new' ? ({F: 'Prospect', G: 'Non', C: 'NON', B: '0', R: '1'}[col] || '') : vInit(a, col, type);
+    const name = `data-f="${col}"`;
+    let inp;
+    if (type === 'sel') { const o = [...opts]; if (v && !o.includes(v)) o.push(v); inp = `<select ${name}><option value="">—</option>${o.map((x) => `<option ${x === v ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>`; }
+    else if (type === 'pct') { const o = [0, 10, 20, 30, 40, 50, 60, 70, 75, 80, 90, 100]; if (v !== '' && !o.includes(+v)) o.push(+v); o.sort((x, y) => x - y); inp = `<select ${name}>${o.map((x) => `<option value="${x}" ${String(x) === v ? 'selected' : ''}>${x} %</option>`).join('')}</select>`; }
+    else if (type === 'area') inp = `<textarea ${name}>${esc(v)}</textarea>`;
+    else inp = `<input ${name} type="text" ${type === 'num' ? 'inputmode="decimal"' : 'autocapitalize="words"'} value="${esc(v)}" autocomplete="off">`;
+    return `<div${type === 'area' || col === 'A' ? ' style="grid-column:1/-1"' : ''}><label>${esc(lab)}${req ? ' <span class="req">*</span>' : ''}</label>${inp}</div>`;
+  };
+  const opt = (v, t, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(t)}</option>`;
+  const form = (S.ed.mode === 'new' || a) ? `<div class="card form" data-ed-form>
+      ${FORM.map(([g, fs]) => `<p class="grp">${g}</p><div class="fgrid">${fs.map(field).join('')}</div>`).join('')}
+      <button class="btn" data-ed-save style="margin-top:18px">${S.ed.mode === 'new' ? 'Ajouter au Sheet' : 'Enregistrer les modifications'}</button>
+      <p class="note" style="margin:10px 0 0">Les colonnes calculées (statut, commission finale, points, base MRM) se mettent à jour seules dans le Sheet.</p>
+    </div>` : '<div class="card"><div class="empty">Choisis un dossier à modifier.</div></div>';
+  el.innerHTML = `
+    <div>
+      <h2 class="h2">Saisie</h2>
+      <p class="sub">Corrige un dossier ou ajoute une affaire : c'est écrit directement dans ton Google Sheet.</p>
+      <div class="seg" data-ed-mode><button data-v="edit" class="${S.ed.mode === 'edit' ? 'on' : ''}">Modifier un dossier</button><button data-v="new" class="${S.ed.mode === 'new' ? 'on' : ''}">Ajouter un dossier</button></div>
+    </div>
+    <div class="filters" style="grid-template-columns:${S.ed.mode === 'edit' ? '1fr 2fr' : '1fr'}">
+      <select data-ed-mois aria-label="Mois">${MOIS.map((m) => opt(m, m, S.ed.mois)).join('')}</select>
+      ${S.ed.mode === 'edit' ? `<select data-ed-id aria-label="Dossier">${opt('', lm.length ? 'Choisir un dossier…' : 'Aucun dossier ce mois-ci', S.ed.id)}${lm.map((x) => opt(x.id, `${x.client} · ${x.signature == null ? '—' : pct(x.signature)} · ${fE.format(x.mte)}`, S.ed.id)).join('')}</select>` : ''}
+    </div>
+    ${form}`;
+}
+function numFr(v) { const t = String(v).replace(/\s| |€/g, '').replace(',', '.'); return t === '' ? '' : Number(t); }
+async function saveSaisie() {
+  const box = document.querySelector('[data-ed-form]');
+  const url = getUrl();
+  if (!box || !url) return;
+  const a = S.ed.mode === 'edit' ? D.affaires.find((x) => x.id === S.ed.id) : null;
+  const data = {};
+  for (const [, fs] of FORM) for (const [col, lab, type] of fs) {
+    const el = box.querySelector(`[data-f="${col}"]`);
+    let v = el.value.trim();
+    if (a && v === vInit(a, col, type)) continue;
+    if (type === 'num') { v = numFr(v); if (v !== '' && isNaN(v)) { toast(lab + ' : nombre invalide', true); return; } }
+    if (type === 'pct') v = v === '' ? '' : Number(v) / 100;
+    data[col] = v;
+  }
+  if (S.ed.mode === 'new' && !String(data.A || '').trim()) { toast('Le nom du client est obligatoire', true); return; }
+  if (!Object.keys(data).length) { toast('Aucune modification'); return; }
+  const q = new URLSearchParams({action: 'save', mois: S.ed.mois, ligne: a ? String(a.ligne) : 'new', client: a ? a.client : '', data: JSON.stringify(data)});
+  toast('Enregistrement…');
+  try {
+    const r = await (await fetch(url + '&' + q.toString(), {cache: 'no-store'})).json();
+    if (r.objectif) throw new Error('mets à jour ton script Google (voir le guide)');
+    if (r.error) throw new Error(r.error);
+    S.edDirty = false;
+    if (S.ed.mode === 'new') S.ed = {mode: 'edit', mois: S.ed.mois, id: S.ed.mois + '-' + r.ligne};
+    await refresh();
+    renderSaisie();
+    toast(a ? 'Modifications enregistrées ✓' : 'Dossier ajouté au Sheet ✓');
+  } catch (e) { toast('Pas enregistré : ' + e.message, true); }
+}
 function openFiche(id) {
   const a = D.affaires.find((x) => x.id === id);
   if (!a) return;
@@ -1153,7 +1244,7 @@ function openFiche(id) {
     ${kv('Delta CA (New − Old)', vEur(a.delta))}
     ${kv('Base MRM retenue', vEur(a.mrm_base))}
     ${kv('Commentaire', a.commentaire)}
-    ${editBloc(a)}
+    <button class="btn" style="margin-top:14px" data-modifier="${esc(a.id)}">✏️ Modifier ce dossier</button>
     <button class="more" style="margin-top:14px" data-client="${esc(cle(a.client))}">Toutes les affaires de ${esc(a.client)} ›</button>
     <div class="closebar"><button class="more" data-close>Fermer</button></div>
   </div></div>`;
@@ -1271,13 +1362,13 @@ function closeFiche() { const f = $('fiche'); if (f) f.remove(); document.body.s
 function renderAll() {
   renderStrip();
   if (!D) return;
-  renderResume(); renderPrev(); renderPrimes(); renderAffaires(); renderClients();
+  renderResume(); renderPrev(); renderPrimes(); renderAffaires(); renderClients(); if (!(S.tab === 'saisie' && S.edDirty)) renderSaisie();
   showTab(S.tab, false);
 }
 function showTab(t, scroll) {
   S.tab = t;
   try { sessionStorage.setItem('kpi_tab', t); } catch (e) {}
-  ['resume','prev','primes','affaires','clients'].forEach((x) => $('p-' + x).classList.toggle('hide', x !== t));
+  ['resume','prev','primes','affaires','clients','saisie'].forEach((x) => $('p-' + x).classList.toggle('hide', x !== t));
   document.querySelectorAll('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
   if (scroll) window.scrollTo(0, 0);
   if (t === 'resume') drawChart();
@@ -1366,6 +1457,8 @@ $('btn-search').addEventListener('click', () => { if (!D) return; showTab('clien
 document.addEventListener('click', (ev) => {
   const fb = ev.target.closest('#fiche');
   if (fb && (ev.target === fb || ev.target.closest('[data-close]'))) { closeFiche(); return; }
+  const mod = ev.target.closest('[data-modifier]');
+  if (mod) { const a = D.affaires.find((x) => x.id === mod.dataset.modifier); closeFiche(); if (a) { S.ed = {mode: 'edit', mois: a.mois, id: a.id}; showTab('saisie', true); renderSaisie(); } return; }
   const es = ev.target.closest('[data-edit-seg] button');
   if (es) { const box = es.closest('[data-edit]'); saveChamp(box.dataset.edit, es.parentElement.dataset.editSeg, es.dataset.v); return; }
   const ec = ev.target.closest('[data-edit-save]');
@@ -1390,7 +1483,7 @@ document.addEventListener('click', (ev) => {
   const pe = ev.target.closest('[data-per]');
   if (pe) { S.per = pe.dataset.per; try { localStorage.setItem('kpi_per', S.per); } catch (e) {} renderStrip(); return; }
   const mo = ev.target.closest('[data-more]');
-  if (mo) { const k = mo.dataset.more; S.more[k] = !S.more[k]; if (k === 'aff') renderAffList(); else ({resume: renderResume, prev: renderPrev, primes: renderPrimes, affaires: renderAffaires, clients: renderClients})[S.tab](); return; }
+  if (mo) { const k = mo.dataset.more; S.more[k] = !S.more[k]; if (k === 'aff') renderAffList(); else ({resume: renderResume, prev: renderPrev, primes: renderPrimes, affaires: renderAffaires, clients: renderClients, saisie: renderSaisie})[S.tab](); return; }
   const it = ev.target.closest('.it[data-id]');
   if (it) { openFiche(it.dataset.id); return; }
   const g = ev.target.closest('[data-goto]');
@@ -1399,6 +1492,9 @@ document.addEventListener('click', (ev) => {
   if (ad) { S.aAdmin = ad.dataset.admin; S.aMois = ''; S.aStatut = ''; S.aMin = 0; S.q = ''; renderAffaires(); const h = $('mes-affaires'); if (h) window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - 170); return; }
   const bar = ev.target.closest('[data-bar]');
   if (bar) { const i = +bar.dataset.bar; S.sel = S.sel === i ? -1 : i; drawChart(); return; }
+  const em = ev.target.closest('[data-ed-mode] button');
+  if (em) { S.ed.mode = em.dataset.v; S.ed.id = ''; renderSaisie(); return; }
+  if (ev.target.closest('[data-ed-save]')) { saveSaisie(); return; }
   const sb = ev.target.closest('[data-seg] button, [data-chips] button');
   if (sb) {
     const box = sb.parentElement, key = box.dataset.seg || box.dataset.chips;
@@ -1419,6 +1515,9 @@ $('per-tri').addEventListener('change', (ev) => setTri(ev.target.value, true));
 $('per-tri').addEventListener('focus', () => { if (S.per !== 'tri') { S.per = 'tri'; try { localStorage.setItem('kpi_per', 'tri'); } catch (e) {} renderStrip(); } });
 $('per-mois').addEventListener('focus', () => { if (S.per !== 'mois') { S.per = 'mois'; try { localStorage.setItem('kpi_per', 'mois'); } catch (e) {} renderStrip(); } });
 document.addEventListener('change', (ev) => {
+  if (ev.target.closest('[data-ed-mois]')) { S.ed.mois = ev.target.value; S.ed.id = ''; renderSaisie(); return; }
+  if (ev.target.closest('[data-ed-id]')) { S.ed.id = ev.target.value; renderSaisie(); return; }
+  if (ev.target.closest('[data-ed-form]')) { S.edDirty = true; return; }
   const es = ev.target.closest('[data-edit-sel]');
   if (es) { const box = es.closest('[data-edit]'); saveChamp(box.dataset.edit, 'signature', Number(es.value) / 100); return; }
   const c = ev.target.closest('[data-sim]');
@@ -1427,6 +1526,7 @@ document.addEventListener('change', (ev) => {
   renderSimRes();
 });
 document.addEventListener('input', (ev) => {
+  if (ev.target.closest('[data-ed-form]')) { S.edDirty = true; return; }
   const cs = ev.target.closest('[data-csearch]');
   if (cs) { S.cq = cs.value; renderClientList(); return; }
   const gs = ev.target.closest('[data-gsearch]');
