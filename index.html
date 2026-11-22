@@ -763,9 +763,10 @@ function drawChart() {
 }
 
 function prevCard(label, a, kp, kpot, f) {
+  const k = kp.replace('prev_', '');
   const m = D.mois_detail.find((x) => x.mois === S.moisPrev) || {};
   const fmt = (v) => (f === 'eur' ? fE.format(v || 0) : f === 'int' ? String(Math.round(v || 0)) : fN.format(v || 0));
-  return `<div class="card cat" style="--a:${a}"><span class="lab">${label}</span><div class="big">${fmt(m[kp])}</div><div class="meta">Potentiel : ${fmt(m[kpot])}</div></div>`;
+  return `<div class="card cat click" style="--a:${a}" data-prevliste="${k}" role="button" tabindex="0"><span class="lab">${label}</span><div class="big">${fmt(m[kp])}</div><div class="meta">Potentiel : ${fmt(m[kpot])}</div><div class="go">Voir les affaires ›</div></div>`;
 }
 function affItem(a, right, val) {
   const signe = num(a.signature) >= 1;
@@ -801,8 +802,8 @@ function renderPrev() {
       <p class="sub">Affaires entre 80 et 99 % : pas encore dans tes chiffres. Potentiel = signé + prév.</p>
       <div class="chips" data-chips="moisPrev">${mois.map((x) => `<button data-v="${esc(x)}" class="${x === S.moisPrev ? 'on' : ''}">${esc(x)}</button>`).join('')}</div>
     </div>
-    <div class="card hero soft" style="--a:var(--c-mte)">
-      <span class="lab">MTE en prévision · ${esc(S.moisPrev)}</span>
+    <div class="card hero soft click" style="--a:var(--c-mte)" data-prevliste="mt" role="button" tabindex="0">
+      <span class="lab">MTE en prévision · ${esc(S.moisPrev)} <span style="color:var(--ink3)">›</span></span>
       <div class="big">${fE.format(m.prev_mt || 0)}</div>
       <div class="meta">Potentiel fin de mois : <b style="color:var(--ink)">${fE.format(m.pot_mt || 0)}</b> · déjà signé : ${fE.format(m.mt_signe || 0)}</div>
       <div class="meta" style="margin-top:6px">Prime BDC (affaires ≥ 1 000 € de MTE) : <b style="color:var(--ink)">${bdc.txt}</b></div>
@@ -1282,6 +1283,19 @@ function openSheet(head, body, label) {
   armSheet();
   document.body.style.overflow = 'hidden';
 }
+function openPrevListe(k) {
+  const l = D.affaires.filter((a) => a.mois === S.moisPrev);
+  const val = {mt: (a) => a.mte, achat: (a) => a.achat, points: (a) => a.points, challenge: (a) => num(a.challenge), commission: (a) => a.commission, nb: () => 1}[k];
+  const fmt = (v) => (k === 'points' || k === 'challenge' ? fN.format(v) + ' pts' : k === 'nb' ? String(v) : fE.format(v));
+  const lbl = {mt: 'MTE', achat: 'Achat', points: 'Points', challenge: 'Points Challenge National', commission: 'Commission finale', nb: "Nombre d'affaires"}[k];
+  const pv = l.filter((a) => num(a.signature) >= 0.8 && num(a.signature) < 1).sort((a, b) => val(b) - val(a));
+  const sg = l.filter((a) => num(a.signature) >= 1).sort((a, b) => val(b) - val(a));
+  const sum = (x) => x.reduce((s2, a) => s2 + val(a), 0);
+  const right = (a) => 'MTE ' + fE.format(a.mte) + ' · Com. finale ' + fE.format(a.commission);
+  const bloc = (t, x) => `<p class="grp" style="margin:16px 0 2px">${t} · ${x.length} affaire${x.length > 1 ? 's' : ''} · ${fmt(sum(x))}</p><div class="items">${x.length ? x.map((a) => affItem(a, right(a), k === 'nb' ? pct(num(a.signature)) : fmt(val(a)))).join('') : '<div class="empty">Aucune.</div>'}</div>`;
+  openSheet(`<h2 class="h2">${lbl} · ${esc(S.moisPrev)}</h2><div class="meta">Potentiel fin de mois : ${fmt(sum(pv) + sum(sg))}</div>`,
+    bloc('En prévision (80 à 99 %)', pv) + bloc('Déjà signé (100 %)', sg), lbl);
+}
 function openListe(kind) {
   const [scope, k] = kind.split('-');
   const moisL = S.mois === 'Juillet' || S.mois === 'Août' ? ['Juillet', 'Août'] : [S.mois];
@@ -1477,6 +1491,8 @@ document.addEventListener('click', (ev) => {
   if (ev.target.closest('[data-back-search]')) { openSearch(); return; }
   const cl = ev.target.closest('[data-client]');
   if (cl) { S.backSearch = !!$('gs-res'); openClient(cl.dataset.client); return; }
+  const pl2 = ev.target.closest('[data-prevliste]');
+  if (pl2) { openPrevListe(pl2.dataset.prevliste); return; }
   const li = ev.target.closest('[data-liste]');
   if (li) { openListe(li.dataset.liste); return; }
   const vb = ev.target.closest('[data-vbar]');
