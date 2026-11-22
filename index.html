@@ -154,7 +154,9 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 .err{color:var(--bad-t);font-size:14px;margin-top:10px}
 .skel{color:transparent!important;background:linear-gradient(90deg,var(--line),transparent,var(--line));background-size:200% 100%;animation:sk 1.2s linear infinite;border-radius:6px}
 @keyframes sk{to{background-position:-200% 0}}
-.per{display:flex;gap:6px;margin-top:10px}
+.per{display:flex;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none;white-space:nowrap}
+.per::-webkit-scrollbar{display:none}
+.per > *{flex:none}
 .per button{appearance:none;border:0;background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);font-size:12px;padding:4px 11px;border-radius:999px;cursor:pointer}
 .per button.on{background:#fff;color:#0d366b;font-weight:700}
 .per select{width:auto;-webkit-appearance:none;appearance:none;border:0;border-radius:999px;font-size:12px;padding:4px 26px 4px 11px;cursor:pointer;color:rgba(255,255,255,.9);background:rgba(255,255,255,.12) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none' stroke='white' stroke-width='1.8'%3E%3Cpath d='M1 1.5l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 10px center}
@@ -219,7 +221,7 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
     <button class="ibtn" id="btn-refresh" aria-label="Actualiser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
     <button class="ibtn" id="btn-setup" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
-  <div class="per" id="per" role="tablist" aria-label="Période du bandeau"><button data-per="annee">Année</button><button data-per="tri">Trimestre</button><select id="per-mois" aria-label="Choisir le mois"></select></div>
+  <div class="per" id="per" role="tablist" aria-label="Période du bandeau"><button data-per="annee">Année</button><select id="per-tri" aria-label="Choisir le trimestre"></select><select id="per-mois" aria-label="Choisir le mois"></select></div>
   <div class="strip" aria-label="Où j'en suis">
     <div class="chip"><div class="chip-l"><i style="background:#6da7ec"></i>MTE</div><div class="chip-v" id="s-mt">—</div><div class="bar"><div id="sb-mt"></div></div></div>
     <div class="chip"><div class="chip-l"><i style="background:#f59a6c"></i>Achat</div><div class="chip-v" id="s-achat">—</div><div class="bar"><div id="sb-achat"></div></div></div>
@@ -325,7 +327,8 @@ function parse(raw) {
       prime_mrm: g(40,1)
     });
   });
-  return {mensuel, trimestres, objectifs, affaires, mois_detail};
+  const exo = txt((obj[0] || [])[3]).replace(/^exercice\s*/i, '');
+  return {mensuel, trimestres, objectifs, affaires, mois_detail, exo};
 }
 
 /* ---------- Calculs ---------- */
@@ -408,6 +411,7 @@ const nowMois = CAL[new Date().getMonth()];
 const S = {tab: 'resume', metric: 'mt', tri: TRI[nowMois] || 'T1', moisPrev: nowMois, sel: -1, pType: '', pTri: '', aMois: '', aStatut: '', aMin: 0, aTri: 'saisie', aAdmin: '', per: 'annee', more: {}, q: ''};
 try { S.per = localStorage.getItem('kpi_per') || 'annee'; } catch (e) {}
 S.mois = MOIS.includes(nowMois) ? nowMois : 'Avril';
+S.triSel = TRI[S.mois] || 'T1';
 S.vue = 'mois'; S.pvTri = 'pct'; S.sim = new Set(); S.aFam = ''; S.vSel = -1;
 const ORDRE_T = ['T1','T2','T3','T4'];
 try { S.tab = sessionStorage.getItem('kpi_tab') || 'resume'; } catch (e) {}
@@ -423,9 +427,17 @@ function moisRow(m) {
   const k = m === 'Juillet' || m === 'Août' ? 'Juillet + Août' : m;
   return D.mensuel.find((r) => r.mois === k) || {mois: k, mt: 0, obj_mt: 0, achat: 0, obj_achat: 0, points: 0, obj_points: 0};
 }
-function curTri() { return D.trim.find((x) => x.trimestre === TRI[S.mois]) || D.trim[0] || {}; }
+function curTri() { return D.trim.find((x) => x.trimestre === S.triSel) || D.trim[0] || {}; }
+function setTri(t, versTri) {
+  S.triSel = t; S.tri = t;
+  if (TRI[S.mois] !== t) { S.mois = TRI[nowMois] === t ? nowMois : PREMIER[t]; S.moisPrev = S.mois; }
+  if (versTri) { S.per = 'tri'; try { localStorage.setItem('kpi_per', 'tri'); } catch (e) {} }
+  if (D) { const r = moisRow(); S.sel = D.mensuel.findIndex((x) => x.mois === r.mois); }
+  renderStrip();
+  if (D) { renderResume(); renderPrev(); }
+}
 function setMois(m, versMois) {
-  S.mois = m; S.moisPrev = m; S.tri = TRI[m] || S.tri;
+  S.mois = m; S.moisPrev = m; S.tri = TRI[m] || S.tri; S.triSel = TRI[m] || S.triSel;
   if (versMois) { S.per = 'mois'; try { localStorage.setItem('kpi_per', 'mois'); } catch (e) {} }
   if (D) { const r = moisRow(); S.sel = D.mensuel.findIndex((x) => x.mois === r.mois); }
   renderStrip();
@@ -435,10 +447,14 @@ function renderStrip() {
   const per = $('per');
   per.querySelectorAll('button').forEach((b) => {
     b.classList.toggle('on', b.dataset.per === S.per);
-    b.textContent = b.dataset.per === 'annee' ? 'Année' : 'Trimestre ' + (TRI[S.mois] || '');
+    b.textContent = D && D.exo ? 'Année ' + D.exo : 'Année';
   });
+  const st = $('per-tri');
+  if (!st.options.length) st.innerHTML = ['T1','T2','T3','T4'].map((t) => `<option value="${t}">${t} · ${{T1: 'avr–juin', T2: 'juil–sept', T3: 'oct–déc', T4: 'janv–mars'}[t]}</option>`).join('');
+  st.value = S.triSel;
+  st.classList.toggle('on', S.per === 'tri');
   const sel = $('per-mois');
-  if (!sel.options.length) sel.innerHTML = MOIS.map((m) => `<option value="${m}">${m}${m === nowMois ? ' (en cours)' : ''}</option>`).join('');
+  if (!sel.options.length) sel.innerHTML = MOIS.map((m) => `<option value="${m}">${m}</option>`).join('');
   sel.value = S.mois;
   sel.classList.toggle('on', S.per === 'mois');
   let v = null;
@@ -534,8 +550,8 @@ function renderResume() {
     <div class="bar"><div class="${t.vide ? '' : tone(p) + '-bg'}" style="width:${t.vide ? 0 : Math.min(100, p * 100)}%"></div></div></div>`;
   const r = D.ratios;
   const mr = moisRow(), md = D.mois_detail.find((x) => x.mois === S.mois) || {}, bdc = bdcInfo(S.mois);
-  const tc = curTri(), rel = ORDRE_T.indexOf(TRI[S.mois]) - ORDRE_T.indexOf(TRI[nowMois]);
-  const bes = besoins(tc, S.mois === nowMois ? md : {}, rel < 0);
+  const tc = curTri(), rel = ORDRE_T.indexOf(S.triSel) - ORDRE_T.indexOf(TRI[nowMois]);
+  const bes = besoins(tc, S.mois === nowMois && TRI[S.mois] === S.triSel ? md : {}, rel < 0);
   const titreMois = (S.mois === nowMois ? 'Ce mois-ci · ' : 'Mois : ') + mr.mois;
   el.innerHTML = `
     <div class="card hero soft" style="--a:var(--c-mte)">
@@ -1273,7 +1289,7 @@ document.addEventListener('click', (ev) => {
     const box = sb.parentElement, key = box.dataset.seg || box.dataset.chips;
     S[key] = sb.dataset.v;
     if (key === 'metric' || key === 'vue') S.sel = -1;
-    if (key === 'moisPrev') setMois(sb.dataset.v, false); else renderResume();
+    if (key === 'moisPrev') setMois(sb.dataset.v, false); else if (key === 'tri') setTri(sb.dataset.v, false); else renderResume();
   }
 });
 document.addEventListener('change', (ev) => {
@@ -1284,6 +1300,8 @@ document.addEventListener('change', (ev) => {
   if (k === 'pvTri') renderPrev(); else if (k[0] === 'p') renderPrimes(); else { S.more.aff = false; renderAffList(); }
 });
 $('per-mois').addEventListener('change', (ev) => setMois(ev.target.value, true));
+$('per-tri').addEventListener('change', (ev) => setTri(ev.target.value, true));
+$('per-tri').addEventListener('focus', () => { if (S.per !== 'tri') { S.per = 'tri'; try { localStorage.setItem('kpi_per', 'tri'); } catch (e) {} renderStrip(); } });
 $('per-mois').addEventListener('focus', () => { if (S.per !== 'mois') { S.per = 'mois'; try { localStorage.setItem('kpi_per', 'mois'); } catch (e) {} renderStrip(); } });
 document.addEventListener('change', (ev) => {
   const c = ev.target.closest('[data-sim]');
