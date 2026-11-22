@@ -179,6 +179,25 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 .xbtn{appearance:none;border:0;background:var(--line);color:var(--ink);width:32px;height:32px;border-radius:50%;font-size:15px;cursor:pointer;flex:none}
 .kv{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
 .kv span{color:var(--ink2);flex:none}.kv b{text-align:right;font-weight:600;word-break:break-word}
+.click{cursor:pointer}
+.click .go{color:var(--ink3);font-size:13px;margin-top:6px}
+.mini .click{border-radius:8px}
+.simrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.simrow:first-child{border-top:0}
+.simrow input{width:22px;height:22px;accent-color:var(--navy2);flex:none;margin:0}
+.sim-c{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sim-c small{display:block;font-weight:400;color:var(--ink3);font-size:13px}
+.simres{background:var(--bg);border-radius:12px;padding:4px 12px;margin-top:12px}
+.simres .row{padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.simres .row:first-child{border-top:0}
+.simres .row span:first-child{color:var(--ink2)}
+.up{color:var(--ok-t);font-weight:700}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.btns .more{margin-top:0}
+.split{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin:10px 0 4px}
+.split div{height:100%}
+.inline{display:flex;align-items:center;gap:10px;margin-top:4px}
+.inline span{font-size:14px;color:var(--ink2);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -260,13 +279,14 @@ function parse(raw) {
     if (!m) return;
     const t = tri.get(m[1]);
     if (!t) tri.set(m[1], {trimestre: m[1], periode: m[2], obj_mt: num(r[1]), mt: num(r[2]), obj_achat: num(r[4]), achat: num(r[5]), obj_points: num(r[7]), points: num(r[8]), prime_mt: num(r[11]), prime_achat: num(r[12]), prime_points: 0});
-    else t.prime_points = num(r[6]);
+    else { t.prime_points = num(r[6]); t.base_points = num(r[5]); }
   });
   const trimestres = [...tri.values()];
 
   const prm = {};
   obj.forEach((r) => { const k = txt(r[13]); if (k && typeof r[14] === 'number') prm[k] = r[14]; });
-  const objectifs = {obj_points: prm['Objectif Points annuel'] || 0, obj_mt: prm['Objectif MTE annuel €'] || prm['Objectif Marge Totale annuel €'] || 0, obj_achat: prm['Objectif Achat annuel €'] || 0};
+  const objectifs = {obj_points: prm['Objectif Points annuel'] || 0, obj_mt: prm['Objectif MTE annuel €'] || prm['Objectif Marge Totale annuel €'] || 0, obj_achat: prm['Objectif Achat annuel €'] || 0,
+    taux_mt: prm['Taux prime trimestrielle (% MTE réalisée)'] || 0.02, taux_achat: prm['Taux prime achat trimestrielle (% achat réalisé)'] || 0.015};
 
   const affaires = [], mois_detail = [];
   MOIS.forEach((mois) => {
@@ -380,6 +400,7 @@ const nowMois = CAL[new Date().getMonth()];
 const S = {tab: 'resume', metric: 'mt', tri: TRI[nowMois] || 'T1', moisPrev: nowMois, sel: -1, pType: '', pTri: '', aMois: '', aStatut: '', aMin: 0, aTri: 'saisie', aAdmin: '', per: 'annee', more: {}, q: ''};
 try { S.per = localStorage.getItem('kpi_per') || 'annee'; } catch (e) {}
 S.mois = MOIS.includes(nowMois) ? nowMois : 'Avril';
+S.vue = 'mois'; S.pvTri = 'pct'; S.sim = new Set(); S.aFam = ''; S.vSel = -1;
 const ORDRE_T = ['T1','T2','T3','T4'];
 try { S.tab = sessionStorage.getItem('kpi_tab') || 'resume'; } catch (e) {}
 let D = null, RAW = null, lastFetch = 0, loading = false;
@@ -389,8 +410,9 @@ const accent = {mt: 'var(--c-mte)', achat: 'var(--c-achat)', points: 'var(--c-pt
 const fmtK = (k, v) => (k === 'points' ? fN.format(v) + ' pts' : fE.format(v));
 
 const MOIS_COURT = {Janvier:'Janv.',Février:'Févr.',Mars:'Mars',Avril:'Avril',Mai:'Mai',Juin:'Juin',Juillet:'Juil.',Août:'Août',Septembre:'Sept.',Octobre:'Oct.',Novembre:'Nov.',Décembre:'Déc.'};
-function moisRow() {
-  const k = S.mois === 'Juillet' || S.mois === 'Août' ? 'Juillet + Août' : S.mois;
+function moisRow(m) {
+  m = m || S.mois;
+  const k = m === 'Juillet' || m === 'Août' ? 'Juillet + Août' : m;
   return D.mensuel.find((r) => r.mois === k) || {mois: k, mt: 0, obj_mt: 0, achat: 0, obj_achat: 0, points: 0, obj_points: 0};
 }
 function curTri() { return D.trim.find((x) => x.trimestre === TRI[S.mois]) || D.trim[0] || {}; }
@@ -432,9 +454,9 @@ function renderStrip() {
   bd.hidden = !n;
   bd.setAttribute('aria-label', n + ' dossier' + (n > 1 ? 's' : '') + ' à administrer');
 }
-function miniRow(label, v, obj, k) {
+function miniRow(label, v, obj, k, liste) {
   const p = obj ? v / obj : 0;
-  return `<div><div class="row"><span>${label}</span><b class="${obj ? tone(p) + '-t' : ''}">${obj ? pct(p) : '—'}</b></div>
+  return `<div${liste ? ` class="click" data-liste="${liste}" role="button" tabindex="0"` : ''}><div class="row"><span>${label}${liste ? ' <span style="color:var(--ink3)">›</span>' : ''}</span><b class="${obj ? tone(p) + '-t' : ''}">${obj ? pct(p) : '—'}</b></div>
     <div class="row"><span class="meta" style="margin:0">${fmtK(k, v)} sur ${fmtK(k, obj)}</span></div>
     <div class="bar"><div class="${tone(p)}-bg" style="width:${Math.min(100, p * 100)}%"></div></div></div>`;
 }
@@ -465,6 +487,19 @@ function besoins(t, md, passe) {
   }
   return out;
 }
+function tauxPoints(p) { return p < 0.8 ? 0 : Math.min(2, 0.6 + 2 * (p - 0.8)); }
+function primesTri(t, d) {
+  d = d || {};
+  const o = D.objectifs;
+  const mt = (t.mt || 0) + (d.mt || 0), achat = (t.achat || 0) + (d.achat || 0), points = (t.points || 0) + (d.points || 0);
+  const pm = t.obj_mt && mt >= t.obj_mt ? mt * o.taux_mt : 0;
+  const pa = t.obj_achat && achat >= t.obj_achat ? achat * o.taux_achat : 0;
+  const pp = t.obj_points ? (t.base_points || 1750) * tauxPoints(points / t.obj_points) : 0;
+  return {mt, achat, points, pm, pa, pp, total: pm + pa + pp, p_mt: t.obj_mt ? mt / t.obj_mt : 0, p_achat: t.obj_achat ? achat / t.obj_achat : 0, p_points: t.obj_points ? points / t.obj_points : 0};
+}
+const sumD = (l) => ({mt: l.reduce((s, a) => s + a.mte, 0), achat: l.reduce((s, a) => s + a.achat, 0), points: l.reduce((s, a) => s + a.points, 0), com: l.reduce((s, a) => s + a.commission, 0)});
+const fleche = (a, b, f) => (Math.abs(a - b) < 0.005 ? f(a) : `${f(a)} → <b>${f(b)}</b>`);
+const triPv = (l) => [...l].sort((a, b) => (S.pvTri === 'mte' ? b.mte - a.mte : S.pvTri === 'com' ? b.commission - a.commission : num(b.signature) - num(a.signature) || b.mte - a.mte));
 function capped(key, arr, n, render) {
   const all = !!S.more[key];
   let h = (all ? arr : arr.slice(0, n)).map(render).join('');
@@ -473,11 +508,12 @@ function capped(key, arr, n, render) {
 }
 
 function objCard(k, label, val, obj, p, unit) {
-  return `<div class="card cat" style="--a:${accent[k]}">
+  return `<div class="card cat click" style="--a:${accent[k]}" data-liste="an-${k}" role="button" tabindex="0">
     <div class="row"><span class="lab">${label}</span><b class="${tone(p)}-t">${pct(p)}</b></div>
     <div class="big">${val}</div>
     <div class="meta">sur ${obj}${unit || ''}</div>
     <div class="bar"><div class="${tone(p)}-bg" style="width:${Math.min(100, p * 100)}%"></div></div>
+    <div class="go">Voir les affaires ›</div>
   </div>`;
 }
 
@@ -497,9 +533,9 @@ function renderResume() {
     <div class="card hero soft" style="--a:var(--c-mte)">
       <div class="row" style="align-items:center"><span class="lab" style="font-weight:600;color:var(--ink)">${esc(titreMois)}</span><button class="link" style="margin:0" data-goto="prev">Détail →</button></div>
       <div class="mini" style="margin-top:12px">
-        ${miniRow('MTE signée', mr.mt, mr.obj_mt, 'mt')}
-        ${miniRow('Achat', mr.achat, mr.obj_achat, 'achat')}
-        ${miniRow('Points', mr.points, mr.obj_points, 'points')}
+        ${miniRow('MTE signée', mr.mt, mr.obj_mt, 'mt', 'm-mt')}
+        ${miniRow('Achat', mr.achat, mr.obj_achat, 'achat', 'm-achat')}
+        ${miniRow('Points', mr.points, mr.obj_points, 'points', 'm-points')}
       </div>
       <div class="plist" style="margin-top:12px">
         <div class="row"><span>MTE en prévision (80–99 %)</span><b>${fE.format(md.prev_mt || 0)}</b></div>
@@ -547,8 +583,12 @@ function renderResume() {
       </div>
     </div>
     <div>
-      <h2 class="h2">Réalisé mois par mois</h2>
-      <p class="sub">Signé à 100 %, comparé à l'objectif du mois. Touche un mois pour le détail.</p>
+      <h2 class="h2">${S.vue === 'cumul' ? "Cumul de l'année vs objectif" : 'Réalisé mois par mois'}</h2>
+      <p class="sub">Signé à 100 %, comparé à l'objectif. Touche un mois pour le détail.</p>
+      <div class="seg" data-seg="vue" style="margin-bottom:8px">
+        <button data-v="mois" class="${S.vue === 'mois' ? 'on' : ''}">Par mois</button>
+        <button data-v="cumul" class="${S.vue === 'cumul' ? 'on' : ''}">Cumulé sur l'année</button>
+      </div>
       <div class="seg" data-seg="metric">
         <button data-v="mt" class="${S.metric === 'mt' ? 'on' : ''}">MTE</button>
         <button data-v="achat" class="${S.metric === 'achat' ? 'on' : ''}">Achat</button>
@@ -557,7 +597,7 @@ function renderResume() {
       <div class="card" style="margin-top:10px;padding-bottom:12px">
         <div class="chart" id="chart-mensuel"></div>
         <div class="info" id="chart-info"></div>
-        <div class="legend"><span><i style="background:${accent[S.metric]}"></i>Réalisé</span><span><i style="background:var(--ink);height:2px;vertical-align:3px"></i>Objectif du mois</span><span>✓ objectif atteint</span></div>
+        <div class="legend" id="chart-legend"></div>
       </div>
     </div>
     <div>
@@ -590,9 +630,46 @@ function barPath(x, y, w, h, r) {
   r = Math.min(r, h, w / 2);
   return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
 }
+function drawCumul(el) {
+  const k = S.metric, rows = D.mensuel;
+  const iNow = rows.findIndex((r) => r.mois === moisRow(nowMois).mois);
+  let cr = 0, co = 0;
+  const pts = rows.map((r, i) => { cr += r[k]; co += r['obj_' + k]; return {mois: r.mois, real: cr, obj: co, has: i <= iNow}; });
+  const W = Math.max(280, el.clientWidth || 320), H = 200, top = 16, bot = 22;
+  const ymax = niceMax(Math.max(1, ...pts.map((p) => Math.max(p.obj, p.has ? p.real : 0))) * 1.04);
+  const yf = (v) => (k === 'points' ? fN.format(v) : v >= 1000 ? fN.format(v / 1000) + ' k' : fN.format(v));
+  const ticks = [0, ymax / 2, ymax];
+  const ml = 8 + Math.max(...ticks.map((t) => yf(t).length)) * 6.4;
+  const y = (v) => top + (H - top - bot) * (1 - v / ymax);
+  const bw = (W - ml) / rows.length, cx = (i) => ml + i * bw + bw / 2;
+  const sel = S.sel >= 0 ? S.sel : iNow;
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Cumul réalisé comparé à l'objectif cumulé">`;
+  ticks.forEach((t) => { s += `<line x1="${ml}" x2="${W}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${ml - 6}" y="${y(t) + 4}" text-anchor="end">${yf(t)}</text>`; });
+  if (sel >= 0) s += `<line x1="${cx(sel)}" x2="${cx(sel)}" y1="${top}" y2="${H - bot}" stroke="var(--ink3)" stroke-dasharray="3 3"/>`;
+  s += `<polyline points="${pts.map((p, i) => cx(i) + ',' + y(p.obj)).join(' ')}" fill="none" stroke="var(--ink2)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  const real = pts.filter((p) => p.has);
+  s += `<polyline points="${real.map((p, i) => cx(i) + ',' + y(p.real)).join(' ')}" fill="none" stroke="${accent[k]}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  real.forEach((p, i) => { s += `<circle cx="${cx(i)}" cy="${y(p.real)}" r="${i === sel ? 5.5 : 4}" fill="${accent[k]}" stroke="var(--card)" stroke-width="2"/>`; });
+  rows.forEach((r, i) => {
+    if (bw >= 26 || i % 2 === 0) s += `<text x="${cx(i)}" y="${H - 5}" text-anchor="middle">${esc(COURT[r.mois] || r.mois)}</text>`;
+    s += `<rect x="${ml + i * bw}" y="0" width="${bw}" height="${H}" fill="transparent" data-bar="${i}" style="cursor:pointer"/>`;
+  });
+  el.innerHTML = s + '</svg>';
+  const p = pts[sel];
+  const info = $('chart-info');
+  if (!p) info.textContent = '';
+  else if (!p.has) info.innerHTML = `<b>Fin ${esc(p.mois.toLowerCase())}</b> : objectif cumulé ${fmtK(k, p.obj)} (mois pas encore joué)`;
+  else {
+    const d = p.real - p.obj;
+    info.innerHTML = `<b>Fin ${esc(p.mois.toLowerCase())}</b> : ${fmtK(k, p.real)} cumulés sur ${fmtK(k, p.obj)} · <b class="${tone(p.obj ? p.real / p.obj : 0)}-t">${p.obj ? pct(p.real / p.obj) : '—'}</b> · ${d >= 0 ? 'en avance de ' : 'en retard de '}${fmtK(k, Math.abs(d))}`;
+  }
+  $('chart-legend').innerHTML = `<span><i style="background:${accent[k]}"></i>Réalisé cumulé</span><span><i style="background:var(--ink2);height:2px;vertical-align:3px"></i>Objectif cumulé (pointillé)</span>`;
+}
 function drawChart() {
   const el = $('chart-mensuel');
   if (!el) return;
+  if (S.vue === 'cumul') { drawCumul(el); return; }
+  $('chart-legend').innerHTML = `<span><i style="background:${accent[S.metric]}"></i>Réalisé</span><span><i style="background:var(--ink);height:2px;vertical-align:3px"></i>Objectif du mois</span><span>✓ objectif atteint</span>`;
   const k = S.metric, rows = D.mensuel;
   const W = Math.max(280, el.clientWidth || 320), H = 190, top = 14, bot = 22;
   const vmax = Math.max(1, ...rows.map((r) => Math.max(r[k], r['obj_' + k])));
@@ -627,12 +704,12 @@ function prevCard(label, a, kp, kpot, f) {
   const fmt = (v) => (f === 'eur' ? fE.format(v || 0) : f === 'int' ? String(Math.round(v || 0)) : fN.format(v || 0));
   return `<div class="card cat" style="--a:${a}"><span class="lab">${label}</span><div class="big">${fmt(m[kp])}</div><div class="meta">Potentiel : ${fmt(m[kpot])}</div></div>`;
 }
-function affItem(a, right) {
+function affItem(a, right, val) {
   const signe = num(a.signature) >= 1;
   const st = signe ? (a.administre ? 'ok-t' : 'warn-t') : a.statut === 'Gagné' ? 'ok-t' : a.statut === 'Perdu' ? 'bad-t' : 'warn-t';
   const lab = signe ? (a.administre ? 'Administré' : 'À administrer') : a.statut;
   return `<div class="it" data-id="${esc(a.id)}" role="button" tabindex="0">
-    <div class="it-c">${esc(a.client)}</div><div class="it-v">${fE.format(a.mte)}</div>
+    <div class="it-c">${esc(a.client)}</div><div class="it-v">${val || fE.format(a.mte)}</div>
     <div class="it-m">${esc(a.mois)} · ${esc(a.metier)} · ${a.signature == null ? '—' : pct(a.signature)}<span class="pill ${st}">${esc(lab)}</span></div>
     <div class="it-s">${right || ''}</div>
   </div>`;
@@ -643,13 +720,18 @@ function renderPrev() {
   if (!mois.includes(S.moisPrev)) S.moisPrev = mois[0];
   const m = D.mois_detail.find((x) => x.mois === S.moisPrev) || {};
   const l = D.affaires.filter((a) => a.mois === S.moisPrev);
-  const signes = l.filter((a) => num(a.signature) >= 1);
+  const signes = triPv(l.filter((a) => num(a.signature) >= 1));
   const sAdm = signes.filter((a) => a.administre), sNon = signes.filter((a) => !a.administre);
   const detail = (a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission) + (a.points ? ' · ' + fN.format(a.points) + ' pts' : ''));
   const sous = (titre, key, list, vide) => `<p class="grp" style="margin:14px 0 2px">${titre} · ${list.length}</p><div class="items">${list.length ? capped(key, list, 5, detail) : '<div class="empty">' + vide + '</div>'}</div>`;
   const bdc = bdcInfo(S.moisPrev);
-  const prev = l.filter((a) => num(a.signature) >= 0.8 && num(a.signature) < 1);
-  const loin = l.filter((a) => a.statut === 'En cours' && num(a.signature) < 0.8).sort((a, b) => num(b.signature) - num(a.signature));
+  const prev = triPv(l.filter((a) => num(a.signature) >= 0.8 && num(a.signature) < 1));
+  const loin = triPv(l.filter((a) => a.statut === 'En cours' && num(a.signature) < 0.8));
+  const iNow = MOIS.indexOf(nowMois);
+  const relance = triPv(D.affaires.filter((a) => a.statut === 'En cours' && MOIS.indexOf(a.mois) < iNow));
+  const cands = triPv(l.filter((a) => a.statut === 'En cours'));
+  const tr = transfo();
+  const opt = (v, t) => `<option value="${v}" ${S.pvTri === v ? 'selected' : ''}>${t}</option>`;
   el.innerHTML = `
     <div>
       <h2 class="h2">Prévisions du mois</h2>
@@ -669,6 +751,14 @@ function renderPrev() {
       ${prevCard('Commission brute', 'var(--c-mag)', 'prev_commission', 'pot_commission', 'eur')}
       ${prevCard("Nombre d'affaires", 'var(--c-vert)', 'prev_nb', 'pot_nb', 'int')}
     </div>
+    <div class="card" style="--a:var(--c-mte)">
+      <h2 class="h2">Simulateur : si je signe…</h2>
+      <p class="sub">Coche les affaires de ${esc(S.moisPrev.toLowerCase())} que tu penses signer : l'impact s'affiche en dessous.</p>
+      <div class="btns"><button class="more" data-simall="prev">Cocher les 80–99 %</button><button class="more" data-simall="none">Tout décocher</button></div>
+      <div style="margin-top:8px">${cands.length ? capped('sim', cands, 6, (a) => `<label class="simrow"><input type="checkbox" data-sim="${esc(a.id)}" ${S.sim.has(a.id) ? 'checked' : ''}><span class="sim-c">${esc(a.client)}<small>${a.signature == null ? '—' : pct(a.signature)} · ${esc(a.metier)} · com. ${fE.format(a.commission)}</small></span><b>${fE.format(a.mte)}</b></label>`) : '<div class="empty">Aucune affaire en cours ce mois-ci.</div>'}</div>
+      <div class="simres" id="sim-res"></div>
+    </div>
+    <div class="inline"><span>Trier les listes par</span><select data-sel="pvTri" aria-label="Tri des listes">${opt('pct', '% de signature')}${opt('mte', 'MTE')}${opt('com', 'Commission')}</select></div>
     <div class="card">
       <h2 class="h2">Déjà signés (100 %)</h2>
       <p class="sub">${signes.length} affaire${signes.length > 1 ? 's' : ''} · MTE : ${fE.format(signes.reduce((s, a) => s + a.mte, 0))} · commission : ${fE.format(signes.reduce((s, a) => s + a.commission, 0))}</p>
@@ -683,15 +773,126 @@ function renderPrev() {
       <h2 class="h2">Plus loin (moins de 80 %)</h2>
       <p class="sub">Affaires en cours, pas encore en prévision.</p>
       <div class="items">${loin.length ? capped('p-loin', loin, 5, (a) => affItem(a, 'Com. ' + fE.format(a.commission))) : '<div class="empty">Aucune.</div>'}</div>
+    </div>
+    <div class="card cat" style="--a:var(--warn)">
+      <h2 class="h2">À relancer</h2>
+      <p class="sub">${relance.length} affaire${relance.length > 1 ? 's' : ''} des mois passés toujours en cours · MTE ${fE.format(relance.reduce((s, a) => s + a.mte, 0))}. Signée ou perdue ? Mets à jour le Sheet.</p>
+      <div class="items">${relance.length ? capped('relance', relance, 5, (a) => affItem(a, 'Com. ' + fE.format(a.commission))) : '<div class="empty">Rien à relancer : tout est à jour.</div>'}</div>
+    </div>
+    <div class="card">
+      <h2 class="h2">Taux de transformation</h2>
+      <p class="sub">Affaires signées parmi celles tranchées (signées + perdues), depuis avril.</p>
+      <div class="big">${tr.s + tr.p ? pct(tr.s / (tr.s + tr.p)) : '—'}</div>
+      <div class="meta">${tr.s} signée${tr.s > 1 ? 's' : ''} · ${tr.p} perdue${tr.p > 1 ? 's' : ''} · ${tr.e} en cours</div>
+      <table class="tbl" style="margin-top:12px"><thead><tr><th>Métier</th><th class="n">Signées</th><th class="n">Perdues</th><th class="n">Taux</th></tr></thead>
+      <tbody>${tr.fam.map((r) => `<tr><td>${esc(r.f)}</td><td class="n">${r.s}</td><td class="n">${r.p}</td><td class="n">${r.s + r.p ? pct(r.s / (r.s + r.p)) : '—'}</td></tr>`).join('')}</tbody></table>
+      <p class="note" style="margin:10px 0 0">« Perdue » = colonne « Affaire perdue ? » à Oui dans le Sheet.</p>
     </div>`;
+  renderSimRes();
+}
+function transfo() {
+  const fam = new Map();
+  let s = 0, p = 0, e = 0;
+  D.affaires.forEach((a) => {
+    const f = famille(a.metier), r = fam.get(f) || {f, s: 0, p: 0, e: 0};
+    if (a.statut === 'Gagné') { r.s++; s++; } else if (a.statut === 'Perdu') { r.p++; p++; } else if (a.statut === 'En cours') { r.e++; e++; }
+    fam.set(f, r);
+  });
+  return {s, p, e, fam: [...fam.values()].filter((r) => r.s + r.p).sort((a, b) => b.s + b.p - (a.s + a.p))};
+}
+function renderSimRes() {
+  const box = $('sim-res');
+  if (!box) return;
+  const chk = D.affaires.filter((a) => a.mois === S.moisPrev && a.statut === 'En cours' && S.sim.has(a.id));
+  if (!chk.length) { box.innerHTML = '<div class="empty" style="padding:8px 0">Coche une ou plusieurs affaires pour voir l\'impact.</div>'; return; }
+  const d = sumD(chk), mr = moisRow(S.moisPrev);
+  const t = D.trim.find((x) => x.trimestre === TRI[S.moisPrev]) || {};
+  const av = primesTri(t), ap = primesTri(t, d);
+  const bdc = bdcInfo(S.moisPrev), nb2 = bdc.nb + chk.filter((a) => a.mte >= 1000).length;
+  const gainBdc = !bdc.prime && nb2 >= 5 ? bdc.montant : 0;
+  const gain = ap.total - av.total + d.com + gainBdc;
+  const pM = (v) => (mr.obj_mt ? pct(v / mr.obj_mt) : '—');
+  box.innerHTML = `
+    <div class="row"><span>MTE du mois</span><span>${fleche(mr.mt, mr.mt + d.mt, fE.format)} <span class="meta" style="display:inline">(${pM(mr.mt)} → ${pM(mr.mt + d.mt)})</span></span></div>
+    <div class="row"><span>${esc(t.trimestre || '')} · MTE</span><span>${fleche(av.p_mt, ap.p_mt, pct)}</span></div>
+    <div class="row"><span>${esc(t.trimestre || '')} · Achat</span><span>${fleche(av.p_achat, ap.p_achat, pct)}</span></div>
+    <div class="row"><span>${esc(t.trimestre || '')} · Points</span><span>${fleche(av.p_points, ap.p_points, pct)}</span></div>
+    <div class="row"><span>Primes du ${esc(t.trimestre || '')} (hors MRM)</span><span>${fleche(av.total, ap.total, fE.format)}</span></div>
+    <div class="row"><span>Commission brute</span><span class="up">+${fE.format(d.com)}</span></div>
+    <div class="row"><span>Prime BDC</span><span>${Math.min(bdc.nb, 5)}/5 → <b>${Math.min(nb2, 5)}/5</b>${gainBdc ? ` <span class="up">+${fE.format(gainBdc)}</span>` : bdc.prime ? ' ✓' : ''}</span></div>
+    <div class="row"><span><b style="color:var(--ink)">Gain variable estimé</b></span><span class="up">+${fE.format(gain)}</span></div>`;
 }
 
+function variableMois() {
+  const fin = {T1: 'Juin', T2: 'Septembre', T3: 'Décembre', T4: 'Mars'};
+  return MOIS.map((m) => {
+    const com = D.affaires.filter((a) => a.mois === m && num(a.signature) >= 1).reduce((s, a) => s + a.commission, 0);
+    const md = D.mois_detail.find((x) => x.mois === m) || {};
+    let pr = (md.prime_bdc || 0) + (md.prime_new || 0);
+    const t = D.trim.find((x) => fin[x.trimestre] === m);
+    if (t) pr += t.primes;
+    return {mois: m, com, pr};
+  });
+}
+function drawVariable() {
+  const el = $('chart-variable');
+  if (!el) return;
+  const rows = variableMois();
+  const W = Math.max(280, el.clientWidth || 320), H = 180, top = 12, bot = 22;
+  const ymax = niceMax(Math.max(1, ...rows.map((r) => r.com + r.pr)) * 1.02);
+  const yf = (v) => (v >= 1000 ? fN.format(v / 1000) + ' k' : fN.format(v));
+  const ticks = [0, ymax / 2, ymax];
+  const ml = 8 + Math.max(...ticks.map((t) => yf(t).length)) * 6.4;
+  const y = (v) => top + (H - top - bot) * (1 - v / ymax);
+  const bw = (W - ml) / rows.length, w = Math.max(6, bw * 0.62);
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Variable par mois : commissions et primes">`;
+  ticks.forEach((t) => { s += `<line x1="${ml}" x2="${W}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${ml - 6}" y="${y(t) + 4}" text-anchor="end">${yf(t)}</text>`; });
+  rows.forEach((r, i) => {
+    const x = ml + i * bw + (bw - w) / 2, op = S.vSel >= 0 && S.vSel !== i ? 0.4 : 1;
+    const hc = y(0) - y(r.com), hp = y(0) - y(r.pr);
+    if (r.com) s += `<path d="${barPath(x, y(r.com), w, hc, r.pr ? 0 : 4)}" fill="var(--c-mte)" opacity="${op}"/>`;
+    if (r.pr) s += `<path d="${barPath(x, y(r.com) - hp - (r.com ? 2 : 0), w, hp, 4)}" fill="var(--c-jaune)" opacity="${op}"/>`;
+    if (bw >= 26 || i % 2 === 0) s += `<text x="${x + w / 2}" y="${H - 5}" text-anchor="middle">${esc(COURT[r.mois] || r.mois)}</text>`;
+    s += `<rect x="${ml + i * bw}" y="0" width="${bw}" height="${H}" fill="transparent" data-vbar="${i}" style="cursor:pointer"/>`;
+  });
+  el.innerHTML = s + '</svg>';
+  const r = rows[S.vSel];
+  $('variable-info').innerHTML = r ? `<b>${esc(r.mois)}</b> : commissions ${fE.format(r.com)} + primes ${fE.format(r.pr)} = <b>${fE.format(r.com + r.pr)}</b>` : 'Touche un mois pour le détail. Primes du trimestre comptées sur son dernier mois.';
+}
 function renderPrimes() {
   const el = $('p-primes');
+  const comTot = D.affaires.filter((a) => num(a.signature) >= 1).reduce((s, a) => s + a.commission, 0);
+  const tq = D.trim.find((x) => x.trimestre === TRI[nowMois]) || {};
+  const moisQ = MOIS.filter((m) => TRI[m] === TRI[nowMois]);
+  const pv = D.affaires.filter((a) => moisQ.includes(a.mois) && num(a.signature) >= 0.8 && num(a.signature) < 1);
+  const dq = sumD(pv), av = primesTri(tq), ap = primesTri(tq, dq);
   const pc = {'Prime MTE': 'var(--c-mte)', 'Prime achat': 'var(--c-achat)', 'Prime points': 'var(--c-pts)', 'Prime MRM': 'var(--c-jaune)', 'Prime BDC': 'var(--c-mag)', 'Prime nouveau métier': 'var(--c-vio)'};
   const rows = D.primes.filter((p) => (!S.pType || p.type === S.pType) && (!S.pTri || p.trimestre === S.pTri) && p.montant !== 0);
   const tot = rows.reduce((s, p) => s + p.montant, 0);
   el.innerHTML = `
+    <div class="card hero">
+      <span class="lab">Mon variable depuis avril</span>
+      <div class="big">${fE.format(comTot + D.primesTotal)}</div>
+      <div class="meta">Commissions brutes ${fE.format(comTot)} + primes ${fE.format(D.primesTotal)}</div>
+    </div>
+    <div class="card">
+      <h2 class="h2">Variable par mois</h2>
+      <div class="chart" id="chart-variable"></div>
+      <div class="info" id="variable-info"></div>
+      <div class="legend"><span><i style="background:var(--c-mte)"></i>Commissions</span><span><i style="background:var(--c-jaune)"></i>Primes</span></div>
+    </div>
+    <div class="card hero soft" style="--a:var(--c-pts)">
+      <span class="lab">Projection du ${esc(tq.trimestre || '')} si tes prév. signent</span>
+      <div class="big">${fE.format(ap.total)}</div>
+      <div class="meta">Primes MTE + achat + points (hors MRM), contre ${fE.format(av.total)} aujourd'hui · <b class="up">+${fE.format(ap.total - av.total)}</b></div>
+      <div class="plist" style="margin-top:10px">
+        <div class="row"><span>${pv.length} affaire${pv.length > 1 ? 's' : ''} entre 80 et 99 % (${esc(tq.periode || '')})</span><b>${fE.format(dq.mt)} MTE</b></div>
+        <div class="row"><span>Prime MTE</span><span>${fleche(av.pm, ap.pm, fE.format)}</span></div>
+        <div class="row"><span>Prime achat</span><span>${fleche(av.pa, ap.pa, fE.format)}</span></div>
+        <div class="row"><span>Prime points</span><span>${fleche(av.pp, ap.pp, fE.format)}</span></div>
+        <div class="row"><span>Commission brute en plus</span><b class="up">+${fE.format(dq.com)}</b></div>
+      </div>
+    </div>
     <div class="card hero">
       <span class="lab">Total de mes primes depuis avril</span>
       <div class="big">${fE.format(D.primesTotal)}</div>
@@ -718,12 +919,17 @@ function renderPrimes() {
         </div>
       </div>
     </div>`;
+  drawVariable();
 }
 
 function renderAffaires() {
   const el = $('p-affaires');
   const mois = [...new Set(D.affaires.map((a) => a.mois))];
-  const pmax = Math.max(1, ...D.parMetier.map((r) => r.mte));
+  const fams = D.sigMetier.filter((r) => r.sign), famTot = fams.reduce((s2, r) => s2 + r.mte, 0) || 1;
+  const pmax = Math.max(1, ...fams.map((r) => r.mte));
+  const gg = D.affaires.filter((a) => a.statut === 'Gagné'), gTot = gg.reduce((s2, a) => s2 + a.mte, 0) || 1;
+  const gp = gg.filter((a) => a.type_client === 'Prospect'), gc = gg.filter((a) => a.type_client !== 'Prospect');
+  const mp = gp.reduce((s2, a) => s2 + a.mte, 0), mc = gc.reduce((s2, a) => s2 + a.mte, 0);
   const opt = (v, t, cur) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(t)}</option>`;
   el.innerHTML = `
     <div>
@@ -736,19 +942,29 @@ function renderAffaires() {
       </div>
     </div>
     <div class="card">
+      <h2 class="h2">Conquête vs parc</h2>
+      <p class="sub">Affaires signées sur des prospects (nouveaux clients) ou sur tes clients existants.</p>
+      <div class="split" role="img" aria-label="Part de MTE prospects ${pct(mp / gTot)}"><div style="width:${(mp / gTot) * 100}%;background:var(--c-vio)"></div><div style="flex:1;background:var(--c-pts)"></div></div>
+      <div class="plist">
+        <div class="row"><span><i class="dot" style="background:var(--c-vio)"></i>Prospects · ${gp.length} affaire${gp.length > 1 ? 's' : ''}</span><b>${fE.format(mp)} · ${pct(mp / gTot)}</b></div>
+        <div class="row"><span><i class="dot" style="background:var(--c-pts)"></i>Clients · ${gc.length} affaire${gc.length > 1 ? 's' : ''}</span><b>${fE.format(mc)} · ${pct(mc / gTot)}</b></div>
+      </div>
+    </div>
+    <div class="card">
       <h2 class="h2">Signatures par métier</h2>
       <p class="sub">IT = Informatique + Solution · Telco = Télécom + Opérateur.</p>
       <table class="tbl"><thead><tr><th>Métier</th><th class="n">Sign.</th><th class="n">MTE</th><th class="n">En cours</th></tr></thead>
       <tbody>${D.sigMetier.map((r) => `<tr><td>${esc(r.famille)}</td><td class="n">${r.sign}</td><td class="n">${fE.format(r.mte)}</td><td class="n">${r.en_cours}</td></tr>`).join('')}</tbody></table>
     </div>
     <div class="card">
-      <h2 class="h2">MTE gagnée par métier</h2>
-      <div class="hbars">${D.parMetier.map((r) => `<div class="hb"><span>${esc(r.metier)}</span><div class="t" style="width:${(r.mte / pmax) * 100}%"></div><b>${fE.format(r.mte)}</b></div>`).join('') || '<div class="empty">Aucune affaire gagnée.</div>'}</div>
+      <h2 class="h2">MTE signée par métier</h2>
+      <p class="sub">Part de chaque métier dans ta MTE signée, et nombre d'affaires.</p>
+      <div class="hbars">${fams.map((r) => `<div class="hb"><span>${esc(r.famille)} (${r.sign})</span><div class="t" style="width:${(r.mte / pmax) * 100}%"></div><b>${pct(r.mte / famTot)} · ${fE.format(r.mte)}</b></div>`).join('') || '<div class="empty">Aucune affaire gagnée.</div>'}</div>
     </div>
     <div class="card">
       <h2 class="h2">Top 10 clients</h2>
-      <p class="sub">Classés par MTE signée.</p>
-      <div class="items">${D.top.length ? capped('top', D.top.map((r, i) => ({...r, i})), 5, (r) => `<div class="it"><div class="it-c"><span class="rank">${r.i + 1}</span>${esc(r.client)}</div><div class="it-v">${fE.format(r.mte)}</div><div class="it-m" style="padding-left:30px">${r.nb} affaire${r.nb > 1 ? 's' : ''} · ${pct(r.part)} du total</div></div>`) : '<div class="empty">Aucune affaire gagnée.</div>'}</div>
+      <p class="sub">Classés par MTE signée. Touche un client pour voir toutes ses affaires.</p>
+      <div class="items">${D.top.length ? capped('top', D.top.map((r, i) => ({...r, i})), 5, (r) => `<div class="it click" data-client="${esc(cle(r.client))}" role="button" tabindex="0"><div class="it-c"><span class="rank">${r.i + 1}</span>${esc(r.client)}</div><div class="it-v">${fE.format(r.mte)} ›</div><div class="it-m" style="padding-left:30px">${r.nb} affaire${r.nb > 1 ? 's' : ''} signée${r.nb > 1 ? 's' : ''} · ${pct(r.part)} du total</div></div>`) : '<div class="empty">Aucune affaire gagnée.</div>'}</div>
     </div>
     <div>
       <h2 class="h2" id="mes-affaires">Mes affaires</h2>
@@ -758,6 +974,7 @@ function renderAffaires() {
         <select data-sel="aMois" aria-label="Mois">${opt('', 'Tous les mois', S.aMois)}${mois.map((m) => opt(m, m, S.aMois)).join('')}</select>
         <select data-sel="aStatut" aria-label="Statut">${opt('', 'Tous statuts', S.aStatut)}${['Gagné','En cours','Perdu'].map((m) => opt(m, m, S.aStatut)).join('')}</select>
         <select data-sel="aMin" aria-label="MTE minimum">${[[0,'Toutes MTE'],[1000,'MTE ≥ 1 000 €'],[2500,'MTE ≥ 2 500 €'],[5000,'MTE ≥ 5 000 €'],[10000,'MTE ≥ 10 000 €'],[20000,'MTE ≥ 20 000 €']].map(([v, t]) => opt(v, t, S.aMin)).join('')}</select>
+        <select data-sel="aFam" aria-label="Métier">${opt('', 'Tous métiers', S.aFam)}${['Print','IT','Telco','Démat','Audiovisuel'].map((f) => opt(f, f, S.aFam)).join('')}</select>
         <select data-sel="aAdmin" aria-label="Administration">${opt('', 'Administration', S.aAdmin)}${opt('non', 'Signés à administrer', S.aAdmin)}${opt('oui', 'Signés administrés', S.aAdmin)}</select>
         <select data-sel="aTri" aria-label="Tri">${opt('saisie', 'Ordre de saisie', S.aTri)}${opt('desc', 'MTE décroissante', S.aTri)}${opt('asc', 'MTE croissante', S.aTri)}</select>
       </div>
@@ -772,7 +989,7 @@ function renderAffList() {
   if (!box) return;
   const q = cle(S.q);
   const okAdmin = (a) => !S.aAdmin || (num(a.signature) >= 1 && (S.aAdmin === 'oui' ? a.administre : !a.administre));
-  let l = D.affaires.filter((a) => (!S.aMois || a.mois === S.aMois) && (!S.aStatut || a.statut === S.aStatut) && a.mte >= S.aMin && okAdmin(a)
+  let l = D.affaires.filter((a) => (!S.aMois || a.mois === S.aMois) && (!S.aStatut || a.statut === S.aStatut) && a.mte >= S.aMin && okAdmin(a) && (!S.aFam || famille(a.metier) === S.aFam)
     && (!q || cle(a.client).includes(q) || (a.projet || '').includes(S.q.trim())));
   if (S.aTri === 'desc') l = [...l].sort((a, b) => b.mte - a.mte);
   if (S.aTri === 'asc') l = [...l].sort((a, b) => a.mte - b.mte);
@@ -815,9 +1032,42 @@ function openFiche(id) {
     ${kv('Delta CA (New − Old)', vEur(a.delta))}
     ${kv('Base MRM retenue', vEur(a.mrm_base))}
     ${kv('Commentaire', a.commentaire)}
+    <button class="more" style="margin-top:14px" data-client="${esc(cle(a.client))}">Toutes les affaires de ${esc(a.client)} ›</button>
   </div></div>`;
   document.body.insertAdjacentHTML('beforeend', html);
   document.body.style.overflow = 'hidden';
+}
+function openSheet(head, body, label) {
+  closeFiche();
+  document.body.insertAdjacentHTML('beforeend', `<div class="sheet-bg" id="fiche" role="dialog" aria-modal="true" aria-label="${esc(label || '')}"><div class="sheet">
+    <div class="grab"></div>
+    <div class="row" style="align-items:flex-start"><div style="min-width:0">${head}</div><button class="xbtn" data-close aria-label="Fermer">✕</button></div>
+    ${body}
+  </div></div>`);
+  document.body.style.overflow = 'hidden';
+}
+function openListe(kind) {
+  const [scope, k] = kind.split('-');
+  const moisL = S.mois === 'Juillet' || S.mois === 'Août' ? ['Juillet', 'Août'] : [S.mois];
+  const f = k === 'mt' ? 'mte' : k;
+  const l = D.affaires.filter((a) => num(a.signature) >= 1 && (scope === 'an' || moisL.includes(a.mois)) && a[f] > 0).sort((a, b) => b[f] - a[f]);
+  const fmt = (v) => (k === 'points' ? fN.format(v) + ' pts' : fE.format(v));
+  const lbl = {mt: 'MTE signée', achat: 'Achat signé', points: 'Points signés'}[k];
+  const per = scope === 'an' ? 'depuis avril' : moisRow().mois.toLowerCase();
+  openSheet(`<h2 class="h2">${lbl} · ${esc(per)}</h2><div class="meta">${l.length} affaire${l.length > 1 ? 's' : ''} · total ${fmt(l.reduce((s2, a) => s2 + a[f], 0))}</div>`,
+    `<div class="items" style="margin-top:10px">${l.map((a) => affItem(a, 'MTE ' + fE.format(a.mte) + ' · Com. ' + fE.format(a.commission), fmt(a[f]))).join('') || '<div class="empty">Aucune affaire signée.</div>'}</div>`, lbl);
+}
+function openClient(key) {
+  const l = D.affaires.filter((a) => cle(a.client) === key);
+  if (!l.length) return;
+  const g = l.filter((a) => num(a.signature) >= 1);
+  const nom = (g[0] || l[0]).client;
+  openSheet(`<h2 class="h2">${esc(nom)}</h2><div class="meta">${l.length} affaire${l.length > 1 ? 's' : ''} · ${g.length} signée${g.length > 1 ? 's' : ''} · ${l.filter((a) => a.statut === 'En cours').length} en cours</div>`,
+    `<div class="g2" style="margin:14px 0 6px">
+      <div class="card" style="padding:10px 12px"><span class="lab">MTE signée</span><div class="big" style="font-size:20px">${fE.format(g.reduce((s2, a) => s2 + a.mte, 0))}</div></div>
+      <div class="card" style="padding:10px 12px"><span class="lab">Commission</span><div class="big" style="font-size:20px">${fE.format(g.reduce((s2, a) => s2 + a.commission, 0))}</div></div>
+    </div>
+    <div class="items">${l.map((a) => affItem(a, 'Achat ' + fE.format(a.achat) + ' · Com. ' + fE.format(a.commission))).join('')}</div>`, nom);
 }
 function closeFiche() { const f = $('fiche'); if (f) f.remove(); document.body.style.overflow = ''; }
 
@@ -834,6 +1084,7 @@ function showTab(t, scroll) {
   document.querySelectorAll('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
   if (scroll) window.scrollTo(0, 0);
   if (t === 'resume') drawChart();
+  if (t === 'primes') drawVariable();
 }
 
 /* ---------- Données ---------- */
@@ -916,7 +1167,21 @@ $('btn-refresh').addEventListener('click', () => refresh());
 /* ---------- Interactions ---------- */
 document.addEventListener('click', (ev) => {
   const fb = ev.target.closest('#fiche');
-  if (fb) { if (ev.target === fb || ev.target.closest('[data-close]')) closeFiche(); return; }
+  if (fb && (ev.target === fb || ev.target.closest('[data-close]'))) { closeFiche(); return; }
+  const cl = ev.target.closest('[data-client]');
+  if (cl) { openClient(cl.dataset.client); return; }
+  const li = ev.target.closest('[data-liste]');
+  if (li) { openListe(li.dataset.liste); return; }
+  const vb = ev.target.closest('[data-vbar]');
+  if (vb) { const i = +vb.dataset.vbar; S.vSel = S.vSel === i ? -1 : i; drawVariable(); return; }
+  const sa = ev.target.closest('[data-simall]');
+  if (sa) {
+    const l = D.affaires.filter((a) => a.mois === S.moisPrev && a.statut === 'En cours');
+    l.forEach((a) => S.sim.delete(a.id));
+    if (sa.dataset.simall === 'prev') l.filter((a) => num(a.signature) >= 0.8).forEach((a) => S.sim.add(a.id));
+    renderPrev(); return;
+  }
+  if (fb && !ev.target.closest('.it[data-id]')) return;
   const t = ev.target.closest('[data-tab]');
   if (t) { showTab(t.dataset.tab, true); return; }
   const pe = ev.target.closest('[data-per]');
@@ -935,7 +1200,7 @@ document.addEventListener('click', (ev) => {
   if (sb) {
     const box = sb.parentElement, key = box.dataset.seg || box.dataset.chips;
     S[key] = sb.dataset.v;
-    if (key === 'metric') S.sel = -1;
+    if (key === 'metric' || key === 'vue') S.sel = -1;
     if (key === 'moisPrev') setMois(sb.dataset.v, false); else renderResume();
   }
 });
@@ -944,10 +1209,16 @@ document.addEventListener('change', (ev) => {
   if (!s) return;
   const k = s.dataset.sel;
   S[k] = k === 'aMin' ? +s.value || 0 : s.value;
-  if (k[0] === 'p') renderPrimes(); else { S.more.aff = false; renderAffList(); }
+  if (k === 'pvTri') renderPrev(); else if (k[0] === 'p') renderPrimes(); else { S.more.aff = false; renderAffList(); }
 });
 $('per-mois').addEventListener('change', (ev) => setMois(ev.target.value, true));
 $('per-mois').addEventListener('focus', () => { if (S.per !== 'mois') { S.per = 'mois'; try { localStorage.setItem('kpi_per', 'mois'); } catch (e) {} renderStrip(); } });
+document.addEventListener('change', (ev) => {
+  const c = ev.target.closest('[data-sim]');
+  if (!c) return;
+  if (c.checked) S.sim.add(c.dataset.sim); else S.sim.delete(c.dataset.sim);
+  renderSimRes();
+});
 document.addEventListener('input', (ev) => {
   const s = ev.target.closest('[data-search]');
   if (!s) return;
@@ -956,6 +1227,8 @@ document.addEventListener('input', (ev) => {
 document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Escape') closeFiche();
   if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('.it[data-id]')) openFiche(ev.target.dataset.id);
+  if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-liste]')) openListe(ev.target.dataset.liste);
+  if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-client]')) openClient(ev.target.dataset.client);
   if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-search]')) ev.target.blur();
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastFetch > 30000) refresh(); });
