@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -157,6 +157,8 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 .per{display:flex;gap:6px;margin-top:10px}
 .per button{appearance:none;border:0;background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);font-size:12px;padding:4px 11px;border-radius:999px;cursor:pointer}
 .per button.on{background:#fff;color:#0d366b;font-weight:700}
+.per select{width:auto;-webkit-appearance:none;appearance:none;border:0;border-radius:999px;font-size:12px;padding:4px 26px 4px 11px;cursor:pointer;color:rgba(255,255,255,.9);background:rgba(255,255,255,.12) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none' stroke='white' stroke-width='1.8'%3E%3Cpath d='M1 1.5l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 10px center}
+.per select.on{color:#0d366b;font-weight:700;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none' stroke='%230d366b' stroke-width='1.8'%3E%3Cpath d='M1 1.5l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 10px center}
 .strip{margin-top:8px}
 .tabbar button{position:relative}
 .badge{position:absolute;top:0;left:calc(50% + 5px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
@@ -190,7 +192,7 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
     <button class="ibtn" id="btn-refresh" aria-label="Actualiser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
     <button class="ibtn" id="btn-setup" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
-  <div class="per" id="per" role="tablist" aria-label="Période du bandeau"><button data-per="annee">Année</button><button data-per="tri">Trimestre</button><button data-per="mois">Mois</button></div>
+  <div class="per" id="per" role="tablist" aria-label="Période du bandeau"><button data-per="annee">Année</button><button data-per="tri">Trimestre</button><select id="per-mois" aria-label="Choisir le mois"></select></div>
   <div class="strip" aria-label="Où j'en suis">
     <div class="chip"><div class="chip-l"><i style="background:#6da7ec"></i>MTE</div><div class="chip-v" id="s-mt">—</div><div class="bar"><div id="sb-mt"></div></div></div>
     <div class="chip"><div class="chip-l"><i style="background:#f59a6c"></i>Achat</div><div class="chip-v" id="s-achat">—</div><div class="bar"><div id="sb-achat"></div></div></div>
@@ -377,6 +379,8 @@ function compute(raw) {
 const nowMois = CAL[new Date().getMonth()];
 const S = {tab: 'resume', metric: 'mt', tri: TRI[nowMois] || 'T1', moisPrev: nowMois, sel: -1, pType: '', pTri: '', aMois: '', aStatut: '', aMin: 0, aTri: 'saisie', aAdmin: '', per: 'annee', more: {}, q: ''};
 try { S.per = localStorage.getItem('kpi_per') || 'annee'; } catch (e) {}
+S.mois = MOIS.includes(nowMois) ? nowMois : 'Avril';
+const ORDRE_T = ['T1','T2','T3','T4'];
 try { S.tab = sessionStorage.getItem('kpi_tab') || 'resume'; } catch (e) {}
 let D = null, RAW = null, lastFetch = 0, loading = false;
 
@@ -386,16 +390,27 @@ const fmtK = (k, v) => (k === 'points' ? fN.format(v) + ' pts' : fE.format(v));
 
 const MOIS_COURT = {Janvier:'Janv.',Février:'Févr.',Mars:'Mars',Avril:'Avril',Mai:'Mai',Juin:'Juin',Juillet:'Juil.',Août:'Août',Septembre:'Sept.',Octobre:'Oct.',Novembre:'Nov.',Décembre:'Déc.'};
 function moisRow() {
-  const k = nowMois === 'Juillet' || nowMois === 'Août' ? 'Juillet + Août' : nowMois;
+  const k = S.mois === 'Juillet' || S.mois === 'Août' ? 'Juillet + Août' : S.mois;
   return D.mensuel.find((r) => r.mois === k) || {mois: k, mt: 0, obj_mt: 0, achat: 0, obj_achat: 0, points: 0, obj_points: 0};
 }
-function curTri() { return D.trim.find((x) => x.trimestre === TRI[nowMois]) || D.trim[0] || {}; }
+function curTri() { return D.trim.find((x) => x.trimestre === TRI[S.mois]) || D.trim[0] || {}; }
+function setMois(m, versMois) {
+  S.mois = m; S.moisPrev = m; S.tri = TRI[m] || S.tri;
+  if (versMois) { S.per = 'mois'; try { localStorage.setItem('kpi_per', 'mois'); } catch (e) {} }
+  if (D) { const r = moisRow(); S.sel = D.mensuel.findIndex((x) => x.mois === r.mois); }
+  renderStrip();
+  if (D) { renderResume(); renderPrev(); }
+}
 function renderStrip() {
   const per = $('per');
   per.querySelectorAll('button').forEach((b) => {
     b.classList.toggle('on', b.dataset.per === S.per);
-    b.textContent = b.dataset.per === 'annee' ? 'Année' : b.dataset.per === 'tri' ? 'Trimestre ' + (TRI[nowMois] || '') : MOIS_COURT[nowMois] || nowMois;
+    b.textContent = b.dataset.per === 'annee' ? 'Année' : 'Trimestre ' + (TRI[S.mois] || '');
   });
+  const sel = $('per-mois');
+  if (!sel.options.length) sel.innerHTML = MOIS.map((m) => `<option value="${m}">${m}${m === nowMois ? ' (en cours)' : ''}</option>`).join('');
+  sel.value = S.mois;
+  sel.classList.toggle('on', S.per === 'mois');
   let v = null;
   if (D) {
     if (S.per === 'tri') { const t = curTri(); v = {mt: t.pct_mt || 0, achat: t.pct_achat || 0, points: t.pct_points || 0}; }
@@ -430,21 +445,23 @@ function bdcInfo(mois) {
   const prime = md.prime_bdc || (l.length >= 5 ? montant : 0);
   return {nb: l.length, montant, prime, txt: prime ? `✓ ${fE.format(prime)} (${l.length}/5)` : `${l.length}/5 · encore ${5 - l.length} pour ${fE.format(montant)}`};
 }
-function besoins(t, md) {
+function besoins(t, md, passe) {
   const out = [];
+  const enc = passe ? 'Il a manqué' : 'Encore';
+  if (passe) md = {};
   const eur = (lbl, v, o, taux, prime, prev) => {
     if (!o) return;
     if (v >= o) out.push({ok: true, h: `Prime ${lbl} débloquée : <b>${fE.format(prime)}</b>`, s: `${pct(v / o)} de l'objectif du trimestre`});
-    else out.push({ok: false, h: `Encore <b>${fE.format(o - v)}</b> ${lbl === 'MTE' ? 'de MTE' : "d'achat"} pour la prime ${lbl}`, s: `Au moins ${fE.format(o * taux)} à la clé` + (prev >= o - v ? ' · ta prév. du mois suffirait' : prev ? ` · ta prév. du mois : ${fE.format(prev)}` : '')});
+    else out.push({ok: false, h: `${enc} <b>${fE.format(o - v)}</b> ${lbl === 'MTE' ? 'de MTE' : "d'achat"} pour la prime ${lbl}`, s: `Au moins ${fE.format(o * taux)} à la clé` + (prev >= o - v ? ' · ta prév. du mois suffirait' : prev ? ` · ta prév. du mois : ${fE.format(prev)}` : '')});
   };
   eur('MTE', t.mt, t.obj_mt, 0.02, t.prime_mt, md.prev_mt || 0);
   eur('achat', t.achat, t.obj_achat, 0.015, t.prime_achat, md.prev_achat || 0);
   if (t.obj_points) {
     const p = t.points / t.obj_points, prev = md.prev_points || 0;
     const fin = (g) => (prev >= g ? ' · ta prév. du mois suffirait' : prev ? ` · ta prév. du mois : ${fN.format(prev)} pts` : '');
-    if (p < 0.8) { const g = 0.8 * t.obj_points - t.points; out.push({ok: false, h: `Encore <b>${fN.format(g)} pts</b> pour atteindre 80 % des points`, s: 'La prime points démarre à 80 % (versée à 60 %)' + fin(g)}); }
-    else if (p < 1) { const g = t.obj_points - t.points; out.push({ok: false, h: `Encore <b>${fN.format(g)} pts</b> pour atteindre 100 % des points`, s: `Tu es à ${pct(p)} : la prime monte à 100 % à l'objectif` + fin(g)}); }
-    else out.push({ok: true, h: `Points à <b>${pct(p)}</b> : prime ${fE.format(t.prime_points)}`, s: p < 1.5 ? `Encore ${fN.format(1.5 * t.obj_points - t.points)} pts pour le maximum (versée à 200 %)` : 'Maximum atteint (versée à 200 %)'});
+    if (p < 0.8) { const g = 0.8 * t.obj_points - t.points; out.push({ok: false, h: `${enc} <b>${fN.format(g)} pts</b> pour atteindre 80 % des points`, s: 'La prime points démarre à 80 % (versée à 60 %)' + fin(g)}); }
+    else if (p < 1) { const g = t.obj_points - t.points; out.push({ok: false, h: `${enc} <b>${fN.format(g)} pts</b> pour atteindre 100 % des points`, s: `Tu es à ${pct(p)} : la prime monte à 100 % à l'objectif` + fin(g)}); }
+    else out.push({ok: true, h: `Points à <b>${pct(p)}</b> : prime ${fE.format(t.prime_points)}`, s: p < 1.5 ? (passe ? 'Versée selon le barème' : `Encore ${fN.format(1.5 * t.obj_points - t.points)} pts pour le maximum (versée à 200 %)`) : 'Maximum atteint (versée à 200 %)'});
   }
   return out;
 }
@@ -472,11 +489,13 @@ function renderResume() {
     <div class="row"><span class="meta" style="margin:0">${fmtK(k, v)} sur ${fmtK(k, obj)}</span></div>
     <div class="bar"><div class="${t.vide ? '' : tone(p) + '-bg'}" style="width:${t.vide ? 0 : Math.min(100, p * 100)}%"></div></div></div>`;
   const r = D.ratios;
-  const mr = moisRow(), md = D.mois_detail.find((x) => x.mois === nowMois) || {}, bdc = bdcInfo(nowMois);
-  const tc = curTri(), bes = besoins(tc, md);
+  const mr = moisRow(), md = D.mois_detail.find((x) => x.mois === S.mois) || {}, bdc = bdcInfo(S.mois);
+  const tc = curTri(), rel = ORDRE_T.indexOf(TRI[S.mois]) - ORDRE_T.indexOf(TRI[nowMois]);
+  const bes = besoins(tc, S.mois === nowMois ? md : {}, rel < 0);
+  const titreMois = (S.mois === nowMois ? 'Ce mois-ci · ' : 'Mois : ') + mr.mois;
   el.innerHTML = `
     <div class="card hero soft" style="--a:var(--c-mte)">
-      <div class="row" style="align-items:center"><span class="lab" style="font-weight:600;color:var(--ink)">Ce mois-ci · ${esc(mr.mois)}</span><button class="link" style="margin:0" data-goto="prev">Détail →</button></div>
+      <div class="row" style="align-items:center"><span class="lab" style="font-weight:600;color:var(--ink)">${esc(titreMois)}</span><button class="link" style="margin:0" data-goto="prev">Détail →</button></div>
       <div class="mini" style="margin-top:12px">
         ${miniRow('MTE signée', mr.mt, mr.obj_mt, 'mt')}
         ${miniRow('Achat', mr.achat, mr.obj_achat, 'achat')}
@@ -489,8 +508,8 @@ function renderResume() {
       </div>
     </div>
     <div class="card">
-      <h2 class="h2">Primes du ${esc(tc.trimestre || '')} : ce qu'il te manque</h2>
-      <p class="sub">Calculé sur le signé à 100 % du trimestre en cours.</p>
+      <h2 class="h2">Primes du ${esc(tc.trimestre || '')} : ${rel < 0 ? 'bilan' : "ce qu'il te manque"}</h2>
+      <p class="sub">${esc(tc.periode || '')} · ${rel < 0 ? 'trimestre terminé' : rel > 0 ? 'trimestre à venir' : 'trimestre en cours'}, sur le signé à 100 %.</p>
       <div>${bes.map((b) => `<div class="need"><span class="ic ${b.ok ? 'ok' : 'todo'}">${b.ok ? '✓' : '!'}</span><div>${b.h}<small>${b.s}</small></div></div>`).join('')}</div>
     </div>
     <p class="lead">Cumul avril → <b>${esc((c.dernier || '—').toLowerCase())}</b> : <b>${pct(c.pct_mt)}</b> de ton objectif annuel de MTE et <b>${fE.format(c.primes)}</b> de primes trimestrielles.</p>
@@ -917,7 +936,7 @@ document.addEventListener('click', (ev) => {
     const box = sb.parentElement, key = box.dataset.seg || box.dataset.chips;
     S[key] = sb.dataset.v;
     if (key === 'metric') S.sel = -1;
-    if (key === 'moisPrev') renderPrev(); else renderResume();
+    if (key === 'moisPrev') setMois(sb.dataset.v, false); else renderResume();
   }
 });
 document.addEventListener('change', (ev) => {
@@ -927,6 +946,8 @@ document.addEventListener('change', (ev) => {
   S[k] = k === 'aMin' ? +s.value || 0 : s.value;
   if (k[0] === 'p') renderPrimes(); else { S.more.aff = false; renderAffList(); }
 });
+$('per-mois').addEventListener('change', (ev) => setMois(ev.target.value, true));
+$('per-mois').addEventListener('focus', () => { if (S.per !== 'mois') { S.per = 'mois'; try { localStorage.setItem('kpi_per', 'mois'); } catch (e) {} renderStrip(); } });
 document.addEventListener('input', (ev) => {
   const s = ev.target.closest('[data-search]');
   if (!s) return;
