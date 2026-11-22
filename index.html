@@ -521,9 +521,10 @@ function primesTri(t, d) {
   const pm = t.obj_mt && mt >= t.obj_mt ? mt * o.taux_mt : 0;
   const pa = t.obj_achat && achat >= t.obj_achat ? achat * o.taux_achat : 0;
   const pp = t.obj_points ? (t.base_points || 1750) * tauxPoints(points / t.obj_points) : 0;
-  return {mt, achat, points, pm, pa, pp, total: pm + pa + pp, p_mt: t.obj_mt ? mt / t.obj_mt : 0, p_achat: t.obj_achat ? achat / t.obj_achat : 0, p_points: t.obj_points ? points / t.obj_points : 0};
+  const pr = (t.prime_mrm || 0) + (d.mrm || 0);
+  return {mt, achat, points, pm, pa, pp, pr, total: pm + pa + pp + pr, p_mt: t.obj_mt ? mt / t.obj_mt : 0, p_achat: t.obj_achat ? achat / t.obj_achat : 0, p_points: t.obj_points ? points / t.obj_points : 0};
 }
-const sumD = (l) => ({mt: l.reduce((s, a) => s + a.mte, 0), achat: l.reduce((s, a) => s + a.achat, 0), points: l.reduce((s, a) => s + a.points, 0), com: l.reduce((s, a) => s + a.commission, 0)});
+const sumD = (l) => ({mt: l.reduce((s, a) => s + a.mte, 0), achat: l.reduce((s, a) => s + a.achat, 0), points: l.reduce((s, a) => s + a.points, 0), com: l.reduce((s, a) => s + a.commission, 0), mrm: l.reduce((s, a) => s + (String(a.metier).toUpperCase() === 'PRINT' ? 0 : num(a.mrm_base)), 0)});
 const fleche = (a, b, f) => (Math.abs(a - b) < 0.005 ? f(a) : `${f(a)} → <b>${f(b)}</b>`);
 const triPv = (l) => [...l].sort((a, b) => (S.pvTri === 'mte' ? b.mte - a.mte : S.pvTri === 'com' ? b.commission - a.commission : num(b.signature) - num(a.signature) || b.mte - a.mte));
 function capped(key, arr, n, render) {
@@ -855,7 +856,7 @@ function renderSimRes() {
     <div class="row"><span>${esc(t.trimestre || '')} · MTE</span><span>${fleche(av.p_mt, ap.p_mt, pct)}</span></div>
     <div class="row"><span>${esc(t.trimestre || '')} · Achat</span><span>${fleche(av.p_achat, ap.p_achat, pct)}</span></div>
     <div class="row"><span>${esc(t.trimestre || '')} · Points</span><span>${fleche(av.p_points, ap.p_points, pct)}</span></div>
-    <div class="row"><span>Primes du ${esc(t.trimestre || '')} (hors MRM)</span><span>${fleche(av.total, ap.total, fE.format)}</span></div>
+    <div class="row"><span>Primes du ${esc(t.trimestre || '')} (MRM incluse)</span><span>${fleche(av.total, ap.total, fE.format)}</span></div>
     <div class="row"><span>Commission finale</span><span class="up">+${fE.format(d.com)}</span></div>
     <div class="row"><span>Prime BDC</span><span>${Math.min(bdc.nb, 5)}/5 → <b>${Math.min(nb2, 5)}/5</b>${gainBdc ? ` <span class="up">+${fE.format(gainBdc)}</span>` : bdc.prime ? ' ✓' : ''}</span></div>
     <div class="row"><span><b style="color:var(--ink)">Gain variable estimé</b></span><span class="up">+${fE.format(gain)}</span></div>`;
@@ -922,12 +923,13 @@ function renderPrimes() {
     <div class="card hero soft" style="--a:var(--c-pts)">
       <span class="lab">Projection du ${esc(tq.trimestre || '')} si tes prév. signent</span>
       <div class="big">${fE.format(ap.total)}</div>
-      <div class="meta">Primes MTE + achat + points (hors MRM), contre ${fE.format(av.total)} aujourd'hui · <b class="up">+${fE.format(ap.total - av.total)}</b></div>
+      <div class="meta">Primes MTE + achat + points + MRM, contre ${fE.format(av.total)} aujourd'hui · <b class="up">+${fE.format(ap.total - av.total)}</b></div>
       <div class="plist" style="margin-top:10px">
         <div class="row"><span>${pv.length} affaire${pv.length > 1 ? 's' : ''} entre 80 et 99 % (${esc(tq.periode || '')})</span><b>${fE.format(dq.mt)} MTE</b></div>
         <div class="row"><span>Prime MTE</span><span>${fleche(av.pm, ap.pm, fE.format)}</span></div>
         <div class="row"><span>Prime achat</span><span>${fleche(av.pa, ap.pa, fE.format)}</span></div>
         <div class="row"><span>Prime points</span><span>${fleche(av.pp, ap.pp, fE.format)}</span></div>
+        <div class="row"><span>Prime MRM (MRM + delta CA ×1,5)</span><span>${fleche(av.pr, ap.pr, fE.format)}</span></div>
         <div class="row"><span>Commission finale en plus</span><b class="up">+${fE.format(dq.com)}</b></div>
       </div>
     </div>
