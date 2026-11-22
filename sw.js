@@ -1,6 +1,6 @@
 // Mes KPI — garde l'appli en mémoire pour qu'elle s'ouvre vite.
 // Les chiffres, eux, sont toujours relus en direct dans le Google Sheet.
-const CACHE = 'mes-kpi-v16';
+const CACHE = 'mes-kpi-v17';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {

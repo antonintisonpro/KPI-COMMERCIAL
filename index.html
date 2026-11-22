@@ -217,6 +217,11 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 .edit textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:15px;background:var(--card);color:var(--ink);resize:vertical}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--card);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:90vw;text-align:center}
 .toast.err{background:var(--bad);color:#fff}
+.sheet-head{position:sticky;top:-10px;z-index:2;background:var(--card);margin:-10px -20px 0;padding:10px 20px 8px;border-bottom:1px solid transparent}
+.sheet-head.sc{border-bottom-color:var(--line)}
+.xbtn{width:36px;height:36px;font-size:16px}
+.closebar{position:sticky;bottom:calc(-24px - env(safe-area-inset-bottom));margin:16px -20px calc(-24px - env(safe-area-inset-bottom));padding:10px 20px calc(14px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
+.closebar .more{margin:0}
 </style>
 </head>
 <body>
@@ -1123,8 +1128,8 @@ function openFiche(id) {
   const kv = (k, v) => (v === '' || v == null ? '' : `<div class="kv"><span>${k}</span><b>${esc(v)}</b></div>`);
   const signe = num(a.signature) >= 1;
   const html = `<div class="sheet-bg" id="fiche" role="dialog" aria-modal="true" aria-label="Fiche ${esc(a.client)}"><div class="sheet">
-    <div class="grab"></div>
-    <div class="row" style="align-items:flex-start"><div style="min-width:0"><h2 class="h2">${esc(a.client)}</h2><div class="meta">${esc(a.mois)} · ${esc(a.metier)} · ${esc(a.type_client)}</div></div><button class="xbtn" data-close aria-label="Fermer">✕</button></div>
+    <div class="sheet-head"><div class="grab"></div>
+    <div class="row" style="align-items:flex-start"><div style="min-width:0"><h2 class="h2">${esc(a.client)}</h2><div class="meta">${esc(a.mois)} · ${esc(a.metier)} · ${esc(a.type_client)}</div></div><button class="xbtn" data-close aria-label="Fermer">✕</button></div></div>
     <div class="g2" style="margin:14px 0 6px">
       <div class="card" style="padding:10px 12px"><span class="lab">MTE</span><div class="big" style="font-size:20px">${fE.format(a.mte)}</div></div>
       <div class="card" style="padding:10px 12px"><span class="lab">Commission finale</span><div class="big" style="font-size:20px">${fE.format(a.commission)}</div></div>
@@ -1150,17 +1155,30 @@ function openFiche(id) {
     ${kv('Commentaire', a.commentaire)}
     ${editBloc(a)}
     <button class="more" style="margin-top:14px" data-client="${esc(cle(a.client))}">Toutes les affaires de ${esc(a.client)} ›</button>
+    <div class="closebar"><button class="more" data-close>Fermer</button></div>
   </div></div>`;
   document.body.insertAdjacentHTML('beforeend', html);
   document.body.style.overflow = 'hidden';
+  armSheet();
+}
+function armSheet() {
+  const f = $('fiche'); if (!f) return;
+  const sh = f.querySelector('.sheet'), hd = f.querySelector('.sheet-head');
+  sh.addEventListener('scroll', () => hd && hd.classList.toggle('sc', sh.scrollTop > 4), {passive: true});
+  let y0 = null, dy = 0;
+  sh.addEventListener('touchstart', (e) => { y0 = sh.scrollTop <= 0 || e.target.closest('.sheet-head') ? e.touches[0].clientY : null; dy = 0; }, {passive: true});
+  sh.addEventListener('touchmove', (e) => { if (y0 == null) return; dy = e.touches[0].clientY - y0; if (dy > 0) sh.style.transform = `translateY(${dy}px)`; }, {passive: true});
+  sh.addEventListener('touchend', () => { if (y0 == null) return; if (dy > 90) closeFiche(); else sh.style.transform = ''; y0 = null; }, {passive: true});
 }
 function openSheet(head, body, label) {
   closeFiche();
   document.body.insertAdjacentHTML('beforeend', `<div class="sheet-bg" id="fiche" role="dialog" aria-modal="true" aria-label="${esc(label || '')}"><div class="sheet">
-    <div class="grab"></div>
-    <div class="row" style="align-items:flex-start"><div style="min-width:0">${head}</div><button class="xbtn" data-close aria-label="Fermer">✕</button></div>
+    <div class="sheet-head"><div class="grab"></div>
+    <div class="row" style="align-items:flex-start"><div style="min-width:0">${head}</div><button class="xbtn" data-close aria-label="Fermer">✕</button></div></div>
     ${body}
+    <div class="closebar"><button class="more" data-close>Fermer</button></div>
   </div></div>`);
+  armSheet();
   document.body.style.overflow = 'hidden';
 }
 function openListe(kind) {
