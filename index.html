@@ -669,8 +669,8 @@ function renderResume() {
       </div>
     </div>
     <div class="card">
-      <h2 class="h2">Primes du ${esc(tc.trimestre || '')} : ${rel < 0 ? 'bilan' : bes.every((b) => b.ok) ? 'toutes débloquées' : "ce qu'il te manque"}</h2>
-      <p class="sub">${esc(tc.periode || '')} · ${rel < 0 ? 'trimestre terminé' : rel > 0 ? 'trimestre à venir' : 'trimestre en cours'}, sur le signé à 100 %.</p>
+      <h2 class="h2">Primes du ${esc(tc.trimestre || '')}</h2>
+      <p class="sub">Cumul ${esc((tc.periode || '').toLowerCase().replace(/-/g, ' + '))} · ${rel < 0 ? 'trimestre terminé' : rel > 0 ? 'trimestre à venir' : 'trimestre en cours'}, sur le signé à 100 %.</p>
       <div>${bes.map((b) => `<div class="need"><span class="ic ${b.ok ? 'ok' : 'todo'}">${b.ok ? '✓' : '!'}</span><div>${b.h}<small>${b.s}</small></div></div>`).join('')}</div>
     </div>
     <p class="lead">Cumul avril → <b>${esc((c.dernier || '—').toLowerCase())}</b> : <b>${pct(c.pct_mt)}</b> de ton objectif annuel de MTE et <b>${fE.format(c.primes)}</b> de primes trimestrielles.</p>
