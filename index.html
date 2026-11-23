@@ -619,20 +619,24 @@ function objTriCard(o) {
   const lignes = ORDRE_T.map((id) => D.trim.find((x) => x.trimestre === id)).filter(Boolean);
   const totObj = lignes.reduce((s, t) => s + (t['obj_' + k] || 0), 0), totReal = lignes.reduce((s, t) => s + (t[k] || 0), 0);
   const an = o['obj_' + k] || totObj;
+  const pk = {mt: 'prime_mt', achat: 'prime_achat', points: 'prime_points'}[k], pl = {mt: 'Prime MTE', achat: 'Prime achat', points: 'Prime points'}[k];
+  const cell = (l, v, c) => `<div style="flex:1;min-width:0"><div class="meta" style="margin:0;font-size:12px">${l}</div><b style="font-size:15px${c ? ';color:var(--' + c + ')' : ''}">${v}</b></div>`;
   const row = (t) => {
-    const ob = t['obj_' + k] || 0, v = t[k] || 0, p = ob ? v / ob : 0, futur = ORDRE_T.indexOf(t.trimestre) > ORDRE_T.indexOf(tc);
-    return `<div style="padding:10px 0;border-top:1px solid var(--line)">
-      <div class="row"><span><b>${t.trimestre}</b> <span class="meta" style="margin:0">${per[t.trimestre]}${t.trimestre === tc ? ' · en cours' : ''}</span></span><b>${fmtK(k, ob)}</b></div>
-      <div class="row"><span class="meta" style="margin:0">${futur ? 'À venir' : 'Réalisé ' + fmtK(k, v)}${an ? ' · ' + pct(ob / an) + ' de l\'année' : ''}</span><b class="${futur ? '' : tone(p) + '-t'}" style="font-size:13px">${futur ? '' : pct(p)}</b></div>
-      <div class="bar" style="margin-top:5px;height:5px"><div class="${futur ? '' : tone(p) + '-bg'}" style="width:${futur ? 0 : Math.min(100, p * 100)}%"></div></div>
+    const ob = t['obj_' + k] || 0, v = t[k] || 0, p = ob ? v / ob : 0, futur = ORDRE_T.indexOf(t.trimestre) > ORDRE_T.indexOf(tc), ec = v - ob;
+    const ecTxt = futur && !v ? '—' : (ec >= 0 ? '+' : '−') + fmtK(k, Math.abs(ec));
+    return `<div style="padding:12px 0;border-top:1px solid var(--line)">
+      <div class="row"><span><b>${t.trimestre}</b> <span class="meta" style="margin:0">${per[t.trimestre]}${t.trimestre === tc ? ' · en cours' : futur ? ' · à venir' : ''}</span></span><b class="${futur && !v ? '' : tone(p) + '-t'}">${futur && !v ? '' : pct(p)}</b></div>
+      <div style="display:flex;gap:8px;margin-top:6px">${cell('Objectif', fmtK(k, ob))}${cell('Résultat', futur && !v ? '—' : fmtK(k, v))}${cell(ec >= 0 ? 'Dépassement' : ORDRE_T.indexOf(t.trimestre) < ORDRE_T.indexOf(tc) ? 'Manqué' : 'Reste à faire', ecTxt)}</div>
+      <div class="bar" style="margin-top:7px;height:5px"><div class="${futur && !v ? '' : tone(p) + '-bg'}" style="width:${futur && !v ? 0 : Math.min(100, p * 100)}%"></div></div>
+      <div class="row" style="margin-top:6px"><span class="meta" style="margin:0">${an ? pct(ob / an) + " de l'objectif annuel" : ''}</span><span class="meta" style="margin:0">${pl} : <b style="color:var(--ink)">${fE.format(t[pk] || 0)}</b></span></div>
     </div>`;
   };
   return `<div class="card">
     <h2 class="h2">Mes objectifs par trimestre</h2>
-    <p class="sub">Touche MTE, Achat ou Points pour voir l'objectif de chaque trimestre.</p>
+    <p class="sub">Objectif, résultat signé à 100 % et prime de chaque trimestre. Touche MTE, Achat ou Points.</p>
     <div class="seg" data-seg="objK" style="margin:10px 0 4px">${[['mt', 'MTE'], ['achat', 'Achat'], ['points', 'Points']].map(([v, l]) => `<button data-v="${v}" class="${v === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div style="margin-top:6px">${lignes.map(row).join('')}</div>
-    <div class="row" style="padding:10px 0 0;border-top:1px solid var(--line);font-weight:700"><span>Total année</span><span>${fmtK(k, totReal)} / ${fmtK(k, totObj)}</span></div>
+    <div style="padding:12px 0 0;border-top:1px solid var(--line)"><div class="row" style="font-weight:700"><span>Total année</span><span>${pct(totObj ? totReal / totObj : 0)}</span></div><div style="display:flex;gap:8px;margin-top:6px">${cell('Objectif', fmtK(k, totObj))}${cell('Résultat', fmtK(k, totReal))}${cell('Primes', fE.format(lignes.reduce((s, t) => s + (t[pk] || 0), 0)))}</div></div>
   </div>`;
 }
 
