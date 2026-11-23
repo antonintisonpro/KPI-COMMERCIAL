@@ -654,7 +654,7 @@ function renderResume() {
   const tc = curTri(), rel = ORDRE_T.indexOf(S.triSel) - ORDRE_T.indexOf(TRI[nowMois]);
   const bes = besoins(tc, S.mois === nowMois && TRI[S.mois] === S.triSel ? md : {}, rel < 0);
   const titreMois = (S.mois === nowMois ? 'Ce mois-ci · ' : 'Mois : ') + mr.mois;
-  el.innerHTML = `
+  el.innerHTML = `${clotureCard()}
     <div class="card hero soft" style="--a:var(--c-mte)">
       <div class="row" style="align-items:center"><span class="lab" style="font-weight:600;color:var(--ink)">${esc(titreMois)}</span><button class="link" style="margin:0" data-goto="prev">Détail →</button></div>
       <div class="mini" style="margin-top:12px">
@@ -876,6 +876,7 @@ function renderPrev() {
       <p class="sub">Affaires entre 80 et 99 % : pas encore dans tes chiffres. Potentiel = signé + prév.</p>
       <div class="chips" data-chips="moisPrev">${mois.map((x) => `<button data-v="${esc(x)}" class="${x === S.moisPrev ? 'on' : ''}">${esc(x)}</button>`).join('')}</div>
     </div>
+    ${aCloturer(S.moisPrev).length ? `<button class="more" style="margin:0;text-align:left" data-cloture="${esc(S.moisPrev)}">Clôturer ${esc(S.moisPrev.toLowerCase())} : ${aCloturer(S.moisPrev).length} dossier(s) pas à 100 % ›</button>` : ''}
     <div class="card hero soft click" style="--a:var(--c-mte)" data-prevliste="mt" role="button" tabindex="0">
       <span class="lab">MTE en prévision · ${esc(S.moisPrev)} <span style="color:var(--ink3)">›</span></span>
       <div class="big">${fE.format(m.prev_mt || 0)}</div>
@@ -1455,6 +1456,89 @@ function openClient(key) {
     ${list('En cours', ec, (a) => 'Com. finale ' + fE.format(a.commission))}
     ${list('Perdues', pe, () => '')}`, nom);
 }
+/* ---------- Clôture du mois : dossiers pas à 100 % ---------- */
+const DECALE = /décalé en /i;
+const moisSuivant = (m) => MOIS[MOIS.indexOf(m) + 1] || '';
+function aCloturer(m) {
+  return D.affaires.filter((a) => a.mois === m && num(a.signature) < 1 && a.statut !== 'Perdu' && txt(a.perdue).toLowerCase() !== 'oui' && !DECALE.test(a.commentaire));
+}
+function moisACloturer() {
+  const j = new Date().getDate(), fin = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  if (j >= Math.min(28, fin - 2) && aCloturer(nowMois).length) return nowMois;
+  const prec = MOIS[MOIS.indexOf(nowMois) - 1];
+  if (j <= 10 && prec && aCloturer(prec).length) return prec;
+  return '';
+}
+function clotureCard() {
+  const m = moisACloturer();
+  if (!m) return '';
+  const n = aCloturer(m).length;
+  return `<div class="card" style="border:2px solid var(--warn)">
+    <h2 class="h2">Clôture de ${esc(m.toLowerCase())}</h2>
+    <p class="sub">${n} dossier${n > 1 ? 's' : ''} pas à 100 %. Pour chacun : perdu, ou décalé en ${esc((moisSuivant(m) || '').toLowerCase())} ?</p>
+    <button class="btn" data-cloture="${esc(m)}">Traiter les dossiers</button>
+  </div>`;
+}
+function openCloture(m) {
+  const l = aCloturer(m), suiv = moisSuivant(m);
+  closeFiche();
+  const item = (a) => `<div style="padding:12px 0;border-top:1px solid var(--line)">
+    <div class="row"><b>${esc(a.client)}</b><span class="meta" style="margin:0">${pct(num(a.signature))}</span></div>
+    <div class="meta" style="margin:2px 0 8px">${esc(a.metier)} · MTE ${fE.format(a.mte)}${a.achat ? ' · Achat ' + fE.format(a.achat) : ''}${a.points ? ' · ' + fN.format(a.points) + ' pts' : ''}</div>
+    <select data-clo="${esc(a.id)}" aria-label="Que faire de ${esc(a.client)}">
+      <option value="">— À décider —</option>
+      ${suiv ? `<option value="decale">Décaler en ${esc(suiv.toLowerCase())} (mêmes chiffres)</option>` : ''}
+      <option value="perdu">Perdu</option>
+    </select></div>`;
+  const html = `<div class="sheet-bg" id="fiche" role="dialog" aria-modal="true" aria-label="Clôture du mois"><div class="sheet">
+    <div class="sheet-head"><div class="grab"></div>
+    <div class="row" style="align-items:flex-start"><div><h2 class="h2">Clôture de ${esc(m.toLowerCase())}</h2><div class="meta">${l.length} dossier${l.length > 1 ? 's' : ''} pas à 100 %</div></div><button class="xbtn" data-close aria-label="Fermer">✕</button></div></div>
+    <p class="note" style="margin:10px 0 0">Décaler : je recopie le dossier en ${esc((suiv || '—').toLowerCase())} avec les mêmes chiffres, et je passe celui de ${esc(m.toLowerCase())} à 0 %. Perdu : « Affaire perdue ? » passe à Oui. Dans les deux cas, le dossier passe en non administré.</p>
+    ${l.length ? l.map(item).join('') : '<div class="empty">Rien à traiter.</div>'}
+    <button class="btn" data-clo-ok="${esc(m)}">Valider</button>
+    <div class="closebar"><button class="more" data-close>Fermer</button></div>
+  </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.body.style.overflow = 'hidden';
+}
+async function apiCall(params) {
+  const r = await (await fetch(getUrl() + '&' + new URLSearchParams(params).toString(), {cache: 'no-store'})).json();
+  if (r.objectif) throw new Error('mets à jour ton script Google (voir le guide)');
+  if (r.error) throw new Error(r.error);
+  return r;
+}
+async function validerCloture(m) {
+  const choix = [...document.querySelectorAll('[data-clo]')].map((s) => [s.dataset.clo, s.value]).filter(([, v]) => v);
+  if (!choix.length) { toast('Choisis au moins une action', true); return; }
+  const suiv = moisSuivant(m);
+  const raw = (RAW.mois || {})[suiv] || [];
+  const deja = (a) => raw.slice(1, 21).some((r) => (txt(a.projet) && txt(r[3]) === txt(a.projet)) || (!txt(a.projet) && cle(r[0]) === cle(a.client)));
+  let ok = 0;
+  toast('Enregistrement…');
+  try {
+    for (const [id, v] of choix) {
+      const a = D.affaires.find((x) => x.id === id);
+      if (!a) continue;
+      const base = {action: 'save', mois: a.mois, ligne: String(a.ligne), client: a.client};
+      if (v === 'perdu') {
+        await apiCall({...base, data: JSON.stringify({Y: 'Oui', T: 'Non'})});
+      } else {
+        if (!deja(a)) {
+          const d = {};
+          Object.entries(COLI).forEach(([c, i]) => { const x = a.row[i]; if (x !== '' && x != null) d[c] = x; });
+          d.T = 'Non'; d.Y = 'Non';
+          await apiCall({action: 'save', mois: suiv, ligne: 'new', client: '', data: JSON.stringify(d)});
+        }
+        const com = [txt(a.commentaire), 'Décalé en ' + suiv].filter(Boolean).join(' · ');
+        await apiCall({...base, data: JSON.stringify({B: 0, T: 'Non', U: com})});
+      }
+      ok++;
+    }
+    closeFiche();
+    toast(ok + ' dossier' + (ok > 1 ? 's' : '') + ' traité' + (ok > 1 ? 's' : '') + ' ✓');
+  } catch (e) { toast('Arrêté après ' + ok + ' dossier(s) : ' + e.message, true); }
+  await refresh();
+}
 function closeFiche() { const f = $('fiche'); if (f) f.remove(); document.body.style.overflow = ''; }
 
 function renderAll() {
@@ -1625,6 +1709,10 @@ $('btn-search').addEventListener('click', () => { if (!D) return; showTab('clien
 document.addEventListener('click', (ev) => {
   const fb = ev.target.closest('#fiche');
   if (fb && (ev.target === fb || ev.target.closest('[data-close]'))) { closeFiche(); return; }
+  const clo = ev.target.closest('[data-cloture]');
+  if (clo) { openCloture(clo.dataset.cloture); return; }
+  const cok = ev.target.closest('[data-clo-ok]');
+  if (cok) { cok.disabled = true; validerCloture(cok.dataset.cloOk); return; }
   const mod = ev.target.closest('[data-modifier]');
   if (mod) { const a = D.affaires.find((x) => x.id === mod.dataset.modifier); const from = {tab: S.tab, y: window.scrollY, fiche: a && a.id}; closeFiche(); if (a) { S.ed = {mode: 'edit', mois: a.mois, id: a.id}; S.edFrom = from; showTab('saisie', true); renderSaisie(); } return; }
   if (ev.target.closest('[data-ed-back]')) { edBack(); return; }
