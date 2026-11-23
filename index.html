@@ -612,6 +612,30 @@ function objCard(k, label, val, obj, p, unit) {
   </div>`;
 }
 
+function objTriCard(o) {
+  const k = S.objK || 'mt';
+  const per = {T1: 'avr–juin', T2: 'juil–sept', T3: 'oct–déc', T4: 'janv–mars'};
+  const tc = TRI[nowMois];
+  const lignes = ORDRE_T.map((id) => D.trim.find((x) => x.trimestre === id)).filter(Boolean);
+  const totObj = lignes.reduce((s, t) => s + (t['obj_' + k] || 0), 0), totReal = lignes.reduce((s, t) => s + (t[k] || 0), 0);
+  const an = o['obj_' + k] || totObj;
+  const row = (t) => {
+    const ob = t['obj_' + k] || 0, v = t[k] || 0, p = ob ? v / ob : 0, futur = ORDRE_T.indexOf(t.trimestre) > ORDRE_T.indexOf(tc);
+    return `<div style="padding:10px 0;border-top:1px solid var(--line)">
+      <div class="row"><span><b>${t.trimestre}</b> <span class="meta" style="margin:0">${per[t.trimestre]}${t.trimestre === tc ? ' · en cours' : ''}</span></span><b>${fmtK(k, ob)}</b></div>
+      <div class="row"><span class="meta" style="margin:0">${futur ? 'À venir' : 'Réalisé ' + fmtK(k, v)}${an ? ' · ' + pct(ob / an) + ' de l\'année' : ''}</span><b class="${futur ? '' : tone(p) + '-t'}" style="font-size:13px">${futur ? '' : pct(p)}</b></div>
+      <div class="bar" style="margin-top:5px;height:5px"><div class="${futur ? '' : tone(p) + '-bg'}" style="width:${futur ? 0 : Math.min(100, p * 100)}%"></div></div>
+    </div>`;
+  };
+  return `<div class="card">
+    <h2 class="h2">Mes objectifs par trimestre</h2>
+    <p class="sub">Touche MTE, Achat ou Points pour voir l'objectif de chaque trimestre.</p>
+    <div class="seg" data-seg="objK" style="margin:10px 0 4px">${[['mt', 'MTE'], ['achat', 'Achat'], ['points', 'Points']].map(([v, l]) => `<button data-v="${v}" class="${v === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div style="margin-top:6px">${lignes.map(row).join('')}</div>
+    <div class="row" style="padding:10px 0 0;border-top:1px solid var(--line);font-weight:700"><span>Total année</span><span>${fmtK(k, totReal)} / ${fmtK(k, totObj)}</span></div>
+  </div>`;
+}
+
 function renderResume() {
   const el = $('p-resume');
   const c = D.cumul, o = D.objectifs;
@@ -653,6 +677,7 @@ function renderResume() {
         ${objCard('points', 'Points', fN.format(c.points), fN.format(o.obj_points), c.pct_points, ' pts')}
       </div>
     </div>
+    ${objTriCard(o)}
     <div class="card hero">
       <span class="lab">Primes trimestrielles cumulées</span>
       <div class="big">${fE.format(c.primes)}</div>
