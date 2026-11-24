@@ -224,6 +224,9 @@ details.note summary{cursor:pointer;font-weight:600;color:var(--ink2)}
 .edit textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:15px;background:var(--card);color:var(--ink);resize:vertical}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--card);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:90vw;text-align:center}
 .toast.err{background:var(--bad);color:#fff}
+.toast.ok{background:var(--ok);color:#fff}
+.okpill{display:inline-block;margin-top:10px;background:var(--ok);color:#fff;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;animation:okpop .25s ease-out}
+@keyframes okpop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
 .sheet-head{position:sticky;top:-10px;z-index:2;background:var(--card);margin:-10px -20px 0;padding:10px 20px 8px;border-bottom:1px solid transparent}
 .sheet-head.sc{border-bottom-color:var(--line)}
 .xbtn{width:36px;height:36px;font-size:16px}
@@ -1344,10 +1347,19 @@ function editBloc(a) {
     <div style="padding-top:8px"><span class="lab">Commentaire</span><textarea data-edit-com aria-label="Commentaire">${esc(a.commentaire)}</textarea><button class="more" style="margin-top:6px" data-edit-save="commentaire">Enregistrer le commentaire</button></div>
   </div>`;
 }
-function toast(msg, err) {
+function toast(msg, err, ok) {
   document.querySelectorAll('.toast').forEach((t) => t.remove());
-  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg; document.body.appendChild(t);
+  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ok ? ' ok' : ''); t.textContent = msg; document.body.appendChild(t);
   setTimeout(() => t.remove(), err ? 4500 : 2200);
+}
+/* Pastille verte « Modifié » affichée un instant sous le bouton qui vient d'être validé */
+function okPill(sel, label) {
+  const b = document.querySelector(sel);
+  if (!b) return;
+  const p = document.createElement('div'); p.style.textAlign = 'center';
+  p.innerHTML = `<span class="okpill">✓ ${esc(label || 'Modifié')}</span>`;
+  b.insertAdjacentElement('afterend', p);
+  setTimeout(() => p.remove(), 3500);
 }
 async function saveChamp(id, champ, valeur) {
   const a = D.affaires.find((x) => x.id === id);
@@ -1361,9 +1373,9 @@ async function saveChamp(id, champ, valeur) {
     const r = await res.json();
     if (r.objectif) throw new Error('mets à jour ton script Google (voir le guide)');
     if (r.error) throw new Error(r.error);
-    toast('Enregistré dans le Sheet ✓');
+    toast('Enregistré dans le Sheet ✓', false, true);
     await refresh();
-    if ($('fiche')) openFiche(id);
+    if ($('fiche')) { openFiche(id); okPill('#fiche .sheet-head', 'Modifié'); }
   } catch (e) { toast('Pas enregistré : ' + e.message, true); }
 }
 /* ---------- Onglet Saisie ---------- */
@@ -1405,7 +1417,12 @@ function renderSaisie() {
       ${FORM.map(([g, fs]) => `<p class="grp">${g}</p><div class="fgrid">${fs.map(field).join('')}</div>`).join('')}
       <button class="btn" data-ed-save style="margin-top:18px">${S.ed.mode === 'new' ? 'Ajouter au Sheet' : 'Enregistrer les modifications'}</button>
       <p class="note" style="margin:10px 0 0">Les colonnes calculées (statut, commission finale, points, base MRM) se mettent à jour seules dans le Sheet.</p>
-    </div>` : '<div class="card"><div class="empty">Choisis un dossier à modifier.</div></div>';
+    </div>${a ? `<div class="card form">
+      <p class="grp" style="margin-top:0">Décaler le dossier</p>
+      <p class="note" style="margin:0 0 10px">Je le recopie dans le mois choisi avec les mêmes chiffres, et je passe celui de ${esc(a.mois.toLowerCase())} à 0 % (non administré, commentaire « Décalé en … »).</p>
+      <select data-ed-dest aria-label="Mois de destination">${MOIS.filter((m) => m !== a.mois).map((m) => opt(m, m, MOIS[MOIS.indexOf(a.mois) + 1] || '')).join('')}</select>
+      <button class="btn" data-ed-move style="margin-top:12px">Décaler dans ce mois</button>
+    </div>` : ''}` : '<div class="card"><div class="empty">Choisis un dossier à modifier.</div></div>';
   const back = S.edFrom ? `<button class="more" style="margin:0 0 10px;text-align:left" data-ed-back>‹ Retour ${esc({mois: 'au Mois', tri: 'au Trimestre', annee: "à l'Année", resume: 'au Résumé', prev: 'aux Prévisions', primes: 'aux Primes', affaires: 'aux Affaires', clients: 'aux Clients'}[S.edFrom.tab] || '')}${S.edFrom.fiche ? ' (fiche du dossier)' : ''}</button>` : '';
   el.innerHTML = `${back}
     <div>
@@ -1455,8 +1472,34 @@ async function saveSaisie() {
     if (S.ed.mode === 'new') S.ed = {mode: 'edit', mois: S.ed.mois, id: S.ed.mois + '-' + r.ligne};
     await refresh();
     renderSaisie();
-    toast(a ? 'Modifications enregistrées ✓' : 'Dossier ajouté au Sheet ✓');
+    toast(a ? 'Modifications enregistrées ✓' : 'Dossier ajouté au Sheet ✓', false, true);
+    okPill('[data-ed-save]', a ? 'Modifié' : 'Ajouté');
   } catch (e) { toast('Pas enregistré : ' + e.message, true); }
+}
+async function decalerSaisie() {
+  const a = S.ed.mode === 'edit' ? D.affaires.find((x) => x.id === S.ed.id) : null;
+  const sel = document.querySelector('[data-ed-dest]');
+  if (!a || !sel || !sel.value) return;
+  const dest = sel.value;
+  if (!confirm(`Décaler « ${a.client} » de ${a.mois.toLowerCase()} en ${dest.toLowerCase()} ?`)) return;
+  const raw = (RAW.mois || {})[dest] || [];
+  const deja = raw.slice(1, 21).some((r) => (txt(a.projet) && txt(r[3]) === txt(a.projet)) || (!txt(a.projet) && cle(r[0]) === cle(a.client)));
+  toast('Enregistrement…');
+  try {
+    if (!deja) {
+      const d = {};
+      Object.entries(COLI).forEach(([c, i]) => { const x = a.row[i]; if (x !== '' && x != null) d[c] = x; });
+      d.T = 'Non'; d.Y = 'Non';
+      await apiCall({action: 'save', mois: dest, ligne: 'new', client: '', data: JSON.stringify(d)});
+    }
+    const com = [txt(a.commentaire), 'Décalé en ' + dest].filter(Boolean).join(' · ');
+    await apiCall({action: 'save', mois: a.mois, ligne: String(a.ligne), client: a.client, data: JSON.stringify({B: 0, T: 'Non', U: com})});
+    S.edDirty = false;
+    await refresh();
+    renderSaisie();
+    toast(deja ? `Déjà présent en ${dest.toLowerCase()} : origine passée à 0 % ✓` : `Décalé en ${dest.toLowerCase()} ✓`, false, true);
+    okPill('[data-ed-move]', 'Décalé en ' + dest.toLowerCase());
+  } catch (e) { toast('Pas décalé : ' + e.message, true); await refresh(); renderSaisie(); }
 }
 function openFiche(id) {
   const a = D.affaires.find((x) => x.id === id);
@@ -1695,7 +1738,7 @@ async function validerCloture(m) {
       ok++;
     }
     closeFiche();
-    toast(ok + ' dossier' + (ok > 1 ? 's' : '') + ' traité' + (ok > 1 ? 's' : '') + ' ✓');
+    toast(ok + ' dossier' + (ok > 1 ? 's' : '') + ' traité' + (ok > 1 ? 's' : '') + ' ✓', false, true);
   } catch (e) { toast('Arrêté après ' + ok + ' dossier(s) : ' + e.message, true); }
   await refresh();
 }
@@ -1925,6 +1968,7 @@ document.addEventListener('click', (ev) => {
   const em = ev.target.closest('[data-ed-mode] button');
   if (em) { S.ed.mode = em.dataset.v; S.ed.id = ''; renderSaisie(); return; }
   if (ev.target.closest('[data-ed-save]')) { saveSaisie(); return; }
+  if (ev.target.closest('[data-ed-move]')) { decalerSaisie(); return; }
   const sb = ev.target.closest('[data-seg] button, [data-chips] button');
   if (sb) {
     const box = sb.parentElement, key = box.dataset.seg || box.dataset.chips;
