@@ -555,15 +555,19 @@ function renderStrip() {
     b.style.width = Math.min(100, v[k] * 100) + '%';
     b.className = tone(v[k]);
   });
-  const tb = document.querySelector('.tabbar [data-tab="mois"]');
-  if (!tb) return;
-  let bd = tb.querySelector('.badge');
-  if (!bd) { bd = document.createElement('span'); bd.className = 'badge'; tb.appendChild(bd); }
-  const n = D ? D.admin.nb : 0;
-  bd.textContent = n > 99 ? '99+' : String(n);
-  bd.hidden = !n;
-  bd.setAttribute('aria-label', n + ' dossier' + (n > 1 ? 's' : '') + ' à administrer');
+  const idT = S.triSel || TRI[S.mois];
+  [['mois', (a) => a.mois === S.mois], ['tri', (a) => TRI[a.mois] === idT], ['annee', () => true]].forEach(([tab, f]) => {
+    const tb = document.querySelector(`.tabbar [data-tab="${tab}"]`);
+    if (!tb) return;
+    let bd = tb.querySelector('.badge');
+    if (!bd) { bd = document.createElement('span'); bd.className = 'badge'; tb.appendChild(bd); }
+    const n = D ? aAdminDe(f).length : 0;
+    bd.textContent = n > 99 ? '99+' : String(n);
+    bd.hidden = !n;
+    bd.setAttribute('aria-label', n + ' dossier' + (n > 1 ? 's' : '') + ' à administrer');
+  });
 }
+const aAdminDe = (f) => D.affaires.filter((a) => f(a) && num(a.signature) >= 1 && !a.administre);
 function miniRow(label, v, obj, k, liste) {
   const p = obj ? v / obj : 0;
   return `<div${liste ? ` class="click" data-liste="${liste}" role="button" tabindex="0"` : ''}><div class="row"><span>${label}${liste ? ' <span style="color:var(--ink3)">›</span>' : ''}</span><b class="${obj ? tone(p) + '-t' : ''}">${obj ? pct(p) : '—'}</b></div>
@@ -703,6 +707,7 @@ function renderTri() {
   const md = D.mois_detail.find((x) => x.mois === S.mois) || {};
   const bes = besoins(t, S.mois === nowMois && TRI[S.mois] === id ? md : {}, rel < 0);
   const mois = MOIS.filter((m) => TRI[m] === id);
+  const nAdmT = aAdminDe((a) => TRI[a.mois] === id).length;
   el.innerHTML = `
     ${navHtml('tri', id + ' <small style="font-size:13px;color:var(--ink3);font-weight:400">· ' + PER_T[id] + '</small>', k > 0, k < 3)}
     <p class="note" style="text-align:center;margin:0">${rel < 0 ? 'Trimestre terminé' : rel > 0 ? 'Trimestre à venir' : 'Trimestre en cours'} · cumul des 3 mois, signé à 100 %</p>
@@ -722,6 +727,7 @@ function renderTri() {
     </div></div>
     <p class="sec">${rel < 0 ? 'Bilan' : "Ce qu'il reste à faire"}</p>
     <div class="card">${bes.map((b) => `<div class="need"><span class="ic ${b.ok ? 'ok' : 'todo'}">${b.ok ? '✓' : '!'}</span><div>${b.h}<small>${b.s}</small></div></div>`).join('') || '<div class="empty">Rien à signaler.</div>'}</div>
+    <div class="card">${lrow(`data-admin-mois="non" data-per-f="${esc(id)}"`, 'Signés à administrer', `<b style="color:${nAdmT ? 'var(--warn-t)' : 'inherit'}">${nAdmT}</b>`)}</div>
     <p class="sec">Les 3 mois</p>
     <div class="card">${mois.map((m) => { const r = moisRow(m); const p = r.obj_mt ? r.mt / r.obj_mt : 0; return lrow(`data-vers-mois="${esc(m)}"`, esc(m), `MTE ${fE.format(r.mt)} · <b class="${tone(p)}-t">${pct(p)}</b>`); }).join('')}</div>`;
 }
@@ -766,6 +772,7 @@ function renderAnnee() {
     <div class="card">
       ${lrow('data-goto="analyse"', 'Ratios et métiers')}
       ${lrow('data-goto="clients"', 'Mes clients')}
+      ${lrow('data-admin-mois="non" data-all="1"', 'Signés à administrer', `<b style="color:${D.admin.nb ? 'var(--warn-t)' : 'inherit'}">${D.admin.nb}</b>`)}
       ${lrow('data-admin-mois="" data-all="1"', 'Toutes mes affaires', `<b>${D.affaires.length}</b>`)}
     </div>`;
 }
@@ -1234,7 +1241,7 @@ function renderAffaires() {
       <p class="sub" id="aff-count"></p>
       <input class="search" type="search" placeholder="Filtrer : client ou n° de projet" value="${esc(S.q)}" data-search autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Rechercher">
       <div class="filters">
-        <select data-sel="aMois" aria-label="Mois">${opt('', 'Tous les mois', S.aMois)}${mois.map((m) => opt(m, m, S.aMois)).join('')}</select>
+        <select data-sel="aMois" aria-label="Mois">${opt('', 'Tous les mois', S.aMois)}${ORDRE_T.map((t) => opt(t, t + ' (trimestre)', S.aMois)).join('')}${mois.map((m) => opt(m, m, S.aMois)).join('')}</select>
         <select data-sel="aStatut" aria-label="Statut">${opt('', 'Tous statuts', S.aStatut)}${['Gagné','En cours','Perdu'].map((m) => opt(m, m, S.aStatut)).join('')}</select>
         <select data-sel="aMin" aria-label="MTE minimum">${[[0,'Toutes MTE'],[1000,'MTE ≥ 1 000 €'],[2500,'MTE ≥ 2 500 €'],[5000,'MTE ≥ 5 000 €'],[10000,'MTE ≥ 10 000 €'],[20000,'MTE ≥ 20 000 €']].map(([v, t]) => opt(v, t, S.aMin)).join('')}</select>
         <select data-sel="aFam" aria-label="Métier">${opt('', 'Tous métiers', S.aFam)}${['Print','IT','Telco','Démat','Audiovisuel'].map((f) => opt(f, f, S.aFam)).join('')}</select>
@@ -1312,7 +1319,7 @@ function renderAffList() {
   if (!box) return;
   const q = cle(S.q);
   const okAdmin = (a) => !S.aAdmin || (num(a.signature) >= 1 && (S.aAdmin === 'oui' ? a.administre : !a.administre));
-  let l = D.affaires.filter((a) => (!S.aMois || a.mois === S.aMois) && (!S.aStatut || a.statut === S.aStatut) && a.mte >= S.aMin && okAdmin(a) && (!S.aFam || famille(a.metier) === S.aFam)
+  let l = D.affaires.filter((a) => (!S.aMois || a.mois === S.aMois || TRI[a.mois] === S.aMois) && (!S.aStatut || a.statut === S.aStatut) && a.mte >= S.aMin && okAdmin(a) && (!S.aFam || famille(a.metier) === S.aFam)
     && (!q || cle(a.client).includes(q) || (a.projet || '').includes(S.q.trim())));
   if (S.aTri === 'desc') l = [...l].sort((a, b) => b.mte - a.mte);
   if (S.aTri === 'asc') l = [...l].sort((a, b) => a.mte - b.mte);
@@ -1908,7 +1915,7 @@ document.addEventListener('click', (ev) => {
   const vm = ev.target.closest('[data-vers-mois]');
   if (vm) { setMois(vm.dataset.versMois, false); showTab('mois', true); return; }
   const am = ev.target.closest('[data-admin-mois]');
-  if (am) { S.aAdmin = am.dataset.adminMois; S.aMois = am.dataset.all ? '' : S.mois; S.aStatut = ''; S.aMin = 0; S.q = ''; renderAffaires(); showTab('affaires', true); return; }
+  if (am) { S.aAdmin = am.dataset.adminMois; S.aMois = am.dataset.all ? '' : am.dataset.perF || S.mois; S.aStatut = ''; S.aMin = 0; S.q = ''; renderAffaires(); showTab('affaires', true); return; }
   const g = ev.target.closest('[data-goto]');
   if (g) { showTab(g.dataset.goto, true); return; }
   const ad = ev.target.closest('[data-admin]');
