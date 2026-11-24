@@ -255,6 +255,18 @@ body.discret main .big, body.discret main .it-v, body.discret main b, body.discr
 .set .sw{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
 .set .sw input{width:22px;height:22px;accent-color:var(--navy2)}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.tabbar{grid-template-columns:repeat(3,1fr)}
+.per,.strip{display:none!important}
+.pnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.pnav h2{font-size:22px;margin:0;text-align:center;flex:1}
+.pnav button{appearance:none;border:1px solid var(--line);background:var(--card);border-radius:50%;width:38px;height:38px;font-size:20px;color:var(--ink);cursor:pointer}
+.pnav button[disabled]{opacity:.3}
+.sec{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink3);margin:6px 2px -4px}
+.lrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line);font-size:15px;cursor:pointer}
+.lrow:first-child{border-top:0}
+.lrow .chev{color:var(--ink3)}
+.fab{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:7;width:54px;height:54px;border-radius:50%;border:0;background:var(--navy2);color:#fff;font-size:30px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer}
+.backbar{appearance:none;border:0;background:none;color:var(--navy2);font-size:16px;font-weight:600;padding:0 0 10px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -279,7 +291,12 @@ body.discret main .big, body.discret main .it-v, body.discret main b, body.discr
 
 <main>
   <div id="banner" class="banner hide" style="margin-bottom:14px"></div>
-  <section class="panel" id="p-resume"></section>
+  <button class="backbar hide" id="backbar">‹ Retour</button>
+  <section class="panel" id="p-mois"></section>
+  <section class="panel hide" id="p-tri"></section>
+  <section class="panel hide" id="p-annee"></section>
+  <section class="panel hide" id="p-analyse"></section>
+  <section class="panel hide" id="p-resume"></section>
   <section class="panel hide" id="p-prev"></section>
   <section class="panel hide" id="p-primes"></section>
   <section class="panel hide" id="p-affaires"></section>
@@ -288,13 +305,11 @@ body.discret main .big, body.discret main .it-v, body.discret main b, body.discr
 </main>
 
 <nav class="tabbar" aria-label="Sections">
-  <button data-tab="resume" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Résumé</button>
-  <button data-tab="prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Prévisions</button>
-  <button data-tab="primes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7.5A6.5 6.5 0 1 0 18 16.5"/><path d="M4 10.5h9M4 13.5h9"/></svg>Primes</button>
-  <button data-tab="affaires"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>Affaires</button>
-  <button data-tab="clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg>Clients</button>
-  <button data-tab="saisie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Saisie</button>
+  <button data-tab="mois" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15.5" r="1.6"/></svg>Mois</button>
+  <button data-tab="tri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 15h10"/></svg>Trimestre</button>
+  <button data-tab="annee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Année</button>
 </nav>
+<button class="fab" id="fab" aria-label="Saisir un dossier">+</button>
 
 <div class="setup hide" id="setup">
   <svg width="56" height="56" viewBox="0 0 56 56"><rect width="56" height="56" rx="13" fill="#2a1650"/><rect x="13" y="30" width="7" height="14" rx="2" fill="#fff"/><rect x="24.5" y="22" width="7" height="22" rx="2" fill="#fff"/><rect x="36" y="13" width="7" height="31" rx="2" fill="#6da7ec"/></svg>
@@ -483,8 +498,8 @@ S.mois = MOIS.includes(nowMois) ? nowMois : 'Avril';
 S.triSel = TRI[S.mois] || 'T1';
 S.vue = 'mois'; S.pvTri = 'pct'; S.sim = new Set(); S.aFam = ''; S.vSel = -1;
 const ORDRE_T = ['T1','T2','T3','T4'];
-try { S.tab = sessionStorage.getItem('kpi_tab') || P.tabDef || 'resume'; } catch (e) {}
-if (P.cache.includes(S.tab)) S.tab = 'resume';
+try { S.tab = sessionStorage.getItem('kpi_tab') || 'mois'; } catch (e) {}
+if (!['mois','tri','annee'].includes(S.tab)) S.tab = 'mois';
 let D = null, RAW = null, lastFetch = 0, loading = false;
 
 /* ---------- Rendu ---------- */
@@ -540,7 +555,8 @@ function renderStrip() {
     b.style.width = Math.min(100, v[k] * 100) + '%';
     b.className = tone(v[k]);
   });
-  const tb = document.querySelector('.tabbar [data-tab="affaires"]');
+  const tb = document.querySelector('.tabbar [data-tab="mois"]');
+  if (!tb) return;
   let bd = tb.querySelector('.badge');
   if (!bd) { bd = document.createElement('span'); bd.className = 'badge'; tb.appendChild(bd); }
   const n = D ? D.admin.nb : 0;
@@ -641,7 +657,144 @@ function objTriCard(o) {
   </div>`;
 }
 
-function renderResume() {
+/* ---------- Les 3 onglets : Mois / Trimestre / Année ---------- */
+const PER_T = {T1: 'avril – juin', T2: 'juillet – septembre', T3: 'octobre – décembre', T4: 'janvier – mars'};
+const navHtml = (key, label, prevOk, nextOk) => `<div class="pnav"><button data-pnav="${key}" data-d="-1" aria-label="Précédent" ${prevOk ? '' : 'disabled'}>‹</button><h2>${label}</h2><button data-pnav="${key}" data-d="1" aria-label="Suivant" ${nextOk ? '' : 'disabled'}>›</button></div>`;
+const lrow = (attrs, label, val) => `<div class="lrow" ${attrs} role="button" tabindex="0"><span>${label}</span><span>${val || ''} <span class="chev">›</span></span></div>`;
+function renderResume() { renderMois(); renderTri(); renderAnnee(); renderAnalyse(); if (S.tab === 'annee') drawChart(); }
+function renderMois() {
+  const el = $('p-mois'), m = S.mois, i = MOIS.indexOf(m);
+  const mr = moisRow(m), md = D.mois_detail.find((x) => x.mois === m) || {}, bdc = bdcInfo(m);
+  const l = D.affaires.filter((a) => a.mois === m);
+  const sig = l.filter((a) => num(a.signature) >= 1), d = sumD(sig);
+  const aAdm = sig.filter((a) => !a.administre).length;
+  const prev = l.filter((a) => num(a.signature) >= 0.8 && num(a.signature) < 1);
+  const nClo = aCloturer(m).length, passe = i < MOIS.indexOf(nowMois);
+  const clo = nClo && (passe || moisACloturer() === m) ? `<div class="card" style="border:2px solid var(--warn)">${lrow(`data-cloture="${esc(m)}"`, `<b>Clôturer ${esc(m.toLowerCase())}</b><br><small style="color:var(--ink3)">${nClo} dossier${nClo > 1 ? 's' : ''} pas à 100 %</small>`)}</div>` : '';
+  el.innerHTML = `
+    ${navHtml('mois', esc(m) + (m === nowMois ? ' <small style="font-size:13px;color:var(--ink3);font-weight:400">· en cours</small>' : ''), i > 0, i < MOIS.length - 1)}
+    ${clo}
+    <p class="sec">Où j'en suis</p>
+    <div class="card"><div class="mini">
+      ${miniRow('MTE signée', mr.mt, mr.obj_mt, 'mt', 'm-mt')}
+      ${miniRow('Achat', mr.achat, mr.obj_achat, 'achat', 'm-achat')}
+      ${miniRow('Points', mr.points, mr.obj_points, 'points', 'm-points')}
+    </div>${m === 'Juillet' || m === 'Août' ? '<p class="note" style="margin:10px 0 0">Juillet et août partagent un seul objectif.</p>' : ''}</div>
+    <p class="sec">Ce que je gagne</p>
+    <div class="card"><div class="plist">
+      <div class="row"><span>Commissions (${sig.length} signé${sig.length > 1 ? 's' : ''})</span><b>${fE.format(d.com)}</b></div>
+      <div class="row"><span>Prime BDC</span><b>${bdc.txt}</b></div>
+      <div class="row"><span>Prime nouveau métier</span><b>${fE.format(md.prime_new || 0)}</b></div>
+      <div class="row tot"><span>Total du mois</span><b>${fE.format(d.com + num(md.prime_bdc) + num(md.prime_new))}</b></div>
+    </div><p class="note" style="margin:8px 0 0">Les primes MTE, achat et points se gagnent au trimestre.</p></div>
+    <p class="sec">Ce qu'il reste à faire</p>
+    <div class="card">
+      ${lrow('data-goto="prev"', 'En prévision (80–99 %)', `<b>${fE.format(md.prev_mt || 0)}</b> · ${prev.length}`)}
+      ${lrow('data-admin-mois="non"', 'Signés à administrer', `<b style="color:${aAdm ? 'var(--warn-t)' : 'inherit'}">${aAdm}</b>`)}
+      ${lrow('data-admin-mois=""', 'Tous les dossiers du mois', `<b>${l.length}</b>`)}
+    </div>`;
+}
+function renderTri() {
+  const el = $('p-tri'), t = curTri(), id = t.trimestre || S.triSel, k = ORDRE_T.indexOf(id);
+  const rel = k - ORDRE_T.indexOf(TRI[nowMois]);
+  const mini = (label, v, obj, p, key) => `<div><div class="row"><span>${label}</span><b class="${rel > 0 && !v ? '' : tone(p) + '-t'}">${rel > 0 && !v ? '—' : pct(p)}</b></div>
+    <div class="row"><span class="meta" style="margin:0">${fmtK(key, v)} sur ${fmtK(key, obj)}</span></div>
+    <div class="bar"><div class="${tone(p)}-bg" style="width:${Math.min(100, p * 100)}%"></div></div></div>`;
+  const md = D.mois_detail.find((x) => x.mois === S.mois) || {};
+  const bes = besoins(t, S.mois === nowMois && TRI[S.mois] === id ? md : {}, rel < 0);
+  const mois = MOIS.filter((m) => TRI[m] === id);
+  el.innerHTML = `
+    ${navHtml('tri', id + ' <small style="font-size:13px;color:var(--ink3);font-weight:400">· ' + PER_T[id] + '</small>', k > 0, k < 3)}
+    <p class="note" style="text-align:center;margin:0">${rel < 0 ? 'Trimestre terminé' : rel > 0 ? 'Trimestre à venir' : 'Trimestre en cours'} · cumul des 3 mois, signé à 100 %</p>
+    <p class="sec">Où j'en suis</p>
+    <div class="card"><div class="mini">
+      ${mini('MTE', t.mt || 0, t.obj_mt || 0, t.pct_mt || 0, 'mt')}
+      ${mini('Achat', t.achat || 0, t.obj_achat || 0, t.pct_achat || 0, 'achat')}
+      ${mini('Points', t.points || 0, t.obj_points || 0, t.pct_points || 0, 'points')}
+    </div></div>
+    <p class="sec">Ce que je gagne</p>
+    <div class="card"><div class="plist">
+      <div class="row"><span><i class="dot" style="background:var(--c-mte)"></i>Prime MTE</span><b>${fE.format(t.prime_mt || 0)}</b></div>
+      <div class="row"><span><i class="dot" style="background:var(--c-achat)"></i>Prime achat</span><b>${fE.format(t.prime_achat || 0)}</b></div>
+      <div class="row"><span><i class="dot" style="background:var(--c-pts)"></i>Prime points</span><b>${fE.format(t.prime_points || 0)}</b></div>
+      <div class="row"><span><i class="dot" style="background:var(--c-jaune)"></i>Prime MRM</span><b>${fE.format(t.prime_mrm || 0)}</b></div>
+      <div class="row tot"><span>Total du trimestre</span><b>${fE.format(t.primes || 0)}</b></div>
+    </div></div>
+    <p class="sec">${rel < 0 ? 'Bilan' : "Ce qu'il reste à faire"}</p>
+    <div class="card">${bes.map((b) => `<div class="need"><span class="ic ${b.ok ? 'ok' : 'todo'}">${b.ok ? '✓' : '!'}</span><div>${b.h}<small>${b.s}</small></div></div>`).join('') || '<div class="empty">Rien à signaler.</div>'}</div>
+    <p class="sec">Les 3 mois</p>
+    <div class="card">${mois.map((m) => { const r = moisRow(m); const p = r.obj_mt ? r.mt / r.obj_mt : 0; return lrow(`data-vers-mois="${esc(m)}"`, esc(m), `MTE ${fE.format(r.mt)} · <b class="${tone(p)}-t">${pct(p)}</b>`); }).join('')}</div>`;
+}
+function renderAnnee() {
+  const el = $('p-annee'), c = D.cumul, o = D.objectifs;
+  const comTot = D.affaires.filter((a) => num(a.signature) >= 1).reduce((s, a) => s + a.commission, 0);
+  el.innerHTML = `
+    <div class="pnav"><h2>Exercice ${esc(D.exo || '')}</h2></div>
+    <p class="note" style="text-align:center;margin:0">Avril → mars · cumul jusqu'à ${esc((c.dernier || '—').toLowerCase())}</p>
+    <p class="sec">Où j'en suis</p>
+    <div class="stack">
+      ${objCard('mt', 'MTE (marge totale enrichie)', fE.format(c.mt), fE.format(o.obj_mt), c.pct_mt)}
+      ${objCard('achat', 'Achat', fE.format(c.achat), fE.format(o.obj_achat), c.pct_achat)}
+      ${objCard('points', 'Points', fN.format(c.points), fN.format(o.obj_points), c.pct_points, ' pts')}
+    </div>
+    ${objTriCard(o)}
+    <div>
+      <h2 class="h2" style="margin:4px 0 10px">${S.vue === 'cumul' ? "Cumul de l'année vs objectif" : 'Mois par mois'}</h2>
+      <div class="seg" data-seg="vue" style="margin-bottom:8px">
+        <button data-v="mois" class="${S.vue === 'mois' ? 'on' : ''}">Par mois</button>
+        <button data-v="cumul" class="${S.vue === 'cumul' ? 'on' : ''}">Cumulé</button>
+      </div>
+      <div class="seg" data-seg="metric">
+        <button data-v="mt" class="${S.metric === 'mt' ? 'on' : ''}">MTE</button>
+        <button data-v="achat" class="${S.metric === 'achat' ? 'on' : ''}">Achat</button>
+        <button data-v="points" class="${S.metric === 'points' ? 'on' : ''}">Points</button>
+      </div>
+      <div class="card" style="margin-top:10px;padding-bottom:12px">
+        <div class="chart" id="chart-mensuel"></div>
+        <div class="info" id="chart-info"></div>
+        <div class="legend" id="chart-legend"></div>
+      </div>
+    </div>
+    <p class="sec">Ce que je gagne</p>
+    <div class="card hero">
+      <span class="lab">Mon variable depuis avril</span>
+      <div class="big">${fE.format(comTot + D.primesTotal)}</div>
+      <div class="meta">Commissions ${fE.format(comTot)} + primes ${fE.format(D.primesTotal)}</div>
+      <button class="link" data-goto="primes">Détail de mes primes →</button>
+    </div>
+    <p class="sec">Comment je vends</p>
+    <div class="card">
+      ${lrow('data-goto="analyse"', 'Ratios et métiers')}
+      ${lrow('data-goto="clients"', 'Mes clients')}
+      ${lrow('data-admin-mois="" data-all="1"', 'Toutes mes affaires', `<b>${D.affaires.length}</b>`)}
+    </div>`;
+}
+function renderAnalyse() {
+  const r = D.ratios, tr = transfo();
+  const fams = D.sigMetier.filter((x) => x.sign), famTot = fams.reduce((s2, x) => s2 + x.mte, 0) || 1, pmax = Math.max(1, ...fams.map((x) => x.mte));
+  $('p-analyse').innerHTML = `
+    <h2 class="h2">Ratios et métiers</h2>
+    <div class="g2">
+      <div class="card"><span class="lab">Affaires signées</span><div class="big">${r.signees}</div></div>
+      <div class="card"><span class="lab">Clients signés</span><div class="big">${r.clients}</div></div>
+      <div class="card"><span class="lab">Panier moyen</span><div class="big">${fE.format(r.panier)}</div></div>
+      <div class="card"><span class="lab">Commission finale</span><div class="big">${fE.format(r.commission)}</div></div>
+      <div class="card"><span class="lab">MTE hors Print</span><div class="big">${pct(r.hors_print)}</div></div>
+      <div class="card"><span class="lab">Sur prospects</span><div class="big">${pct(r.prospects)}</div></div>
+      <div class="card"><span class="lab">Via lead GRC</span><div class="big">${pct(r.grc)}</div></div>
+      ${tr.s + tr.p ? `<div class="card"><span class="lab">Taux de transformation</span><div class="big">${pct(tr.s / (tr.s + tr.p))}</div><div class="meta">${tr.s} gagnées · ${tr.p} perdues</div></div>` : ''}
+    </div>
+    <div class="card">
+      <h2 class="h2">MTE signée par métier</h2>
+      <div class="hbars">${fams.map((x) => `<div class="hb"><span>${esc(x.famille)} (${x.sign})</span><div class="t" style="width:${(x.mte / pmax) * 100}%"></div><b>${pct(x.mte / famTot)} · ${fE.format(x.mte)}</b></div>`).join('') || '<div class="empty">Aucune affaire signée.</div>'}</div>
+    </div>
+    <div class="card">
+      <h2 class="h2">Signatures par métier</h2>
+      <table class="tbl"><thead><tr><th>Métier</th><th class="n">Sign.</th><th class="n">MTE</th><th class="n">En cours</th></tr></thead>
+      <tbody>${D.sigMetier.map((x) => `<tr><td>${esc(x.famille)}</td><td class="n">${x.sign}</td><td class="n">${fE.format(x.mte)}</td><td class="n">${x.en_cours}</td></tr>`).join('')}</tbody></table>
+    </div>`;
+}
+function renderResumeOld() {
   const el = $('p-resume');
   const c = D.cumul, o = D.objectifs;
   const t = D.trim.find((x) => x.trimestre === S.tri) || D.trim[0] || {};
@@ -1246,7 +1399,7 @@ function renderSaisie() {
       <button class="btn" data-ed-save style="margin-top:18px">${S.ed.mode === 'new' ? 'Ajouter au Sheet' : 'Enregistrer les modifications'}</button>
       <p class="note" style="margin:10px 0 0">Les colonnes calculées (statut, commission finale, points, base MRM) se mettent à jour seules dans le Sheet.</p>
     </div>` : '<div class="card"><div class="empty">Choisis un dossier à modifier.</div></div>';
-  const back = S.edFrom ? `<button class="more" style="margin:0 0 10px;text-align:left" data-ed-back>‹ Retour ${esc({resume: 'au Résumé', prev: 'aux Prévisions', primes: 'aux Primes', affaires: 'aux Affaires', clients: 'aux Clients'}[S.edFrom.tab] || '')}${S.edFrom.fiche ? ' (fiche du dossier)' : ''}</button>` : '';
+  const back = S.edFrom ? `<button class="more" style="margin:0 0 10px;text-align:left" data-ed-back>‹ Retour ${esc({mois: 'au Mois', tri: 'au Trimestre', annee: "à l'Année", resume: 'au Résumé', prev: 'aux Prévisions', primes: 'aux Primes', affaires: 'aux Affaires', clients: 'aux Clients'}[S.edFrom.tab] || '')}${S.edFrom.fiche ? ' (fiche du dossier)' : ''}</button>` : '';
   el.innerHTML = `${back}
     <div>
       <h2 class="h2">Saisie</h2>
@@ -1550,10 +1703,15 @@ function renderAll() {
 function showTab(t, scroll) {
   S.tab = t;
   try { sessionStorage.setItem('kpi_tab', t); } catch (e) {}
-  ['resume','prev','primes','affaires','clients','saisie'].forEach((x) => $('p-' + x).classList.toggle('hide', x !== t));
-  document.querySelectorAll('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+  const MAIN = ['mois','tri','annee'];
+  if (MAIN.includes(t)) S.main = t;
+  ['mois','tri','annee','analyse','resume','prev','primes','affaires','clients','saisie'].forEach((x) => $('p-' + x).classList.toggle('hide', x !== t));
+  $('backbar').classList.toggle('hide', MAIN.includes(t) || t === 'saisie');
+  $('backbar').textContent = '‹ ' + ({mois: 'Mois', tri: 'Trimestre', annee: 'Année'}[S.main || 'mois']);
+  $('fab').classList.toggle('hide', t === 'saisie');
+  document.querySelectorAll('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.tab === (MAIN.includes(t) ? t : S.main)));
   if (scroll) window.scrollTo(0, 0);
-  if (t === 'resume') drawChart();
+  if (t === 'annee') drawChart();
   if (t === 'primes') drawVariable();
 }
 
@@ -1742,9 +1900,15 @@ document.addEventListener('click', (ev) => {
   const pe = ev.target.closest('[data-per]');
   if (pe) { S.per = pe.dataset.per; try { localStorage.setItem('kpi_per', S.per); } catch (e) {} renderStrip(); return; }
   const mo = ev.target.closest('[data-more]');
-  if (mo) { const k = mo.dataset.more; S.more[k] = !S.more[k]; if (k === 'aff') renderAffList(); else ({resume: renderResume, prev: renderPrev, primes: renderPrimes, affaires: renderAffaires, clients: renderClients, saisie: renderSaisie})[S.tab](); return; }
+  if (mo) { const k = mo.dataset.more; S.more[k] = !S.more[k]; if (k === 'aff') renderAffList(); else ({mois: renderResume, tri: renderResume, annee: renderResume, analyse: renderResume, resume: renderResume, prev: renderPrev, primes: renderPrimes, affaires: renderAffaires, clients: renderClients, saisie: renderSaisie})[S.tab](); return; }
   const it = ev.target.closest('.it[data-id]');
   if (it) { openFiche(it.dataset.id); return; }
+  const pn = ev.target.closest('[data-pnav]');
+  if (pn) { const d = +pn.dataset.d; if (pn.dataset.pnav === 'mois') { const m = MOIS[MOIS.indexOf(S.mois) + d]; if (m) setMois(m, false); } else { const t = ORDRE_T[ORDRE_T.indexOf(S.triSel) + d]; if (t) setTri(t, false); } return; }
+  const vm = ev.target.closest('[data-vers-mois]');
+  if (vm) { setMois(vm.dataset.versMois, false); showTab('mois', true); return; }
+  const am = ev.target.closest('[data-admin-mois]');
+  if (am) { S.aAdmin = am.dataset.adminMois; S.aMois = am.dataset.all ? '' : S.mois; S.aStatut = ''; S.aMin = 0; S.q = ''; renderAffaires(); showTab('affaires', true); return; }
   const g = ev.target.closest('[data-goto]');
   if (g) { showTab(g.dataset.goto, true); return; }
   const ad = ev.target.closest('[data-admin]');
@@ -1771,6 +1935,8 @@ document.addEventListener('change', (ev) => {
 });
 $('per-mois').addEventListener('change', (ev) => setMois(ev.target.value, true));
 $('per-tri').addEventListener('change', (ev) => setTri(ev.target.value, true));
+$('backbar').addEventListener('click', () => showTab(S.main || 'mois', true));
+$('fab').addEventListener('click', () => { if (!D) return; S.ed = {mode: 'new', mois: S.mois, id: ''}; S.edFrom = {tab: S.tab, y: window.scrollY}; showTab('saisie', true); renderSaisie(); });
 $('per-tri').addEventListener('focus', () => { if (S.per !== 'tri') { S.per = 'tri'; try { localStorage.setItem('kpi_per', 'tri'); } catch (e) {} renderStrip(); } });
 $('per-mois').addEventListener('focus', () => { if (S.per !== 'mois') { S.per = 'mois'; try { localStorage.setItem('kpi_per', 'mois'); } catch (e) {} renderStrip(); } });
 document.addEventListener('change', (ev) => {
@@ -1803,7 +1969,7 @@ document.addEventListener('keydown', (ev) => {
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastFetch > 30000) refresh(); });
 let resizeT;
-window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => D && S.tab === 'resume' && drawChart(), 150); });
+window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => D && S.tab === 'annee' && drawChart(), 150); });
 
 /* Tirer vers le bas pour actualiser */
 let y0 = null;
