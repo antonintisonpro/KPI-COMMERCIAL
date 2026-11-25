@@ -666,6 +666,18 @@ function objTriCard(o) {
 
 /* ---------- Les 3 onglets : Mois / Trimestre / Année ---------- */
 const PER_T = {T1: 'avril – juin', T2: 'juillet – septembre', T3: 'octobre – décembre', T4: 'janvier – mars'};
+/* Paie des primes trimestrielles : fin du mois qui suit le trimestre (M+1) */
+const PAIE_T = {T1: 'Juillet', T2: 'Octobre', T3: 'Janvier', T4: 'Avril'};
+const PAIE_IDX = {T1: 3, T2: 6, T3: 9, T4: 12};
+function paieStatut(id) {
+  const n = MOIS.indexOf(nowMois), p = PAIE_IDX[id];
+  return n > p ? 'payee' : n === p ? 'ce-mois' : 'a-venir';
+}
+const paieTxt = (id) => { const st = paieStatut(id), m = PAIE_T[id].toLowerCase(); return st === 'payee' ? `Payée fin ${m}` : st === 'ce-mois' ? `Payée fin ${m} (ce mois-ci)` : `Payée sur le salaire de fin ${m}`; };
+function prochainePaie() {
+  const id = ORDRE_T.find((t) => paieStatut(t) !== 'payee') || 'T4';
+  return {id, t: D.trim.find((x) => x.trimestre === id) || {}};
+}
 const navHtml = (key, label, prevOk, nextOk) => `<div class="pnav"><button data-pnav="${key}" data-d="-1" aria-label="Précédent" ${prevOk ? '' : 'disabled'}>‹</button><h2>${label}</h2><button data-pnav="${key}" data-d="1" aria-label="Suivant" ${nextOk ? '' : 'disabled'}>›</button></div>`;
 const lrow = (attrs, label, val) => `<div class="lrow" ${attrs} role="button" tabindex="0"><span>${label}</span><span>${val || ''} <span class="chev">›</span></span></div>`;
 function renderResume() { renderMois(); renderTri(); renderAnnee(); renderAnalyse(); if (S.tab === 'annee') drawChart(); }
@@ -681,6 +693,7 @@ function renderMois() {
   el.innerHTML = `
     ${navHtml('mois', esc(m) + (m === nowMois ? ' <small style="font-size:13px;color:var(--ink3);font-weight:400">· en cours</small>' : ''), i > 0, i < MOIS.length - 1)}
     ${clo}
+    ${(() => { const q = prochainePaie(); const enCours = q.id === TRI[nowMois]; return `<div class="card">${lrow(`data-goto="primes"`, `📅 <b>Prochaine paie de primes : fin ${esc(PAIE_T[q.id].toLowerCase())}</b><br><small style="color:var(--ink3)">Primes du ${q.id}${enCours ? ' (trimestre en cours, montant provisoire)' : ''}</small>`, `<b>${fE.format(q.t.primes || 0)}</b>`)}</div>`; })()}
     <p class="sec">Où j'en suis</p>
     <div class="card"><div class="mini">
       ${miniRow('MTE signée', mr.mt, mr.obj_mt, 'mt', 'm-mt')}
@@ -727,7 +740,7 @@ function renderTri() {
       <div class="row"><span><i class="dot" style="background:var(--c-pts)"></i>Prime points</span><b>${fE.format(t.prime_points || 0)}</b></div>
       <div class="row"><span><i class="dot" style="background:var(--c-jaune)"></i>Prime MRM</span><b>${fE.format(t.prime_mrm || 0)}</b></div>
       <div class="row tot"><span>Total du trimestre</span><b>${fE.format(t.primes || 0)}</b></div>
-    </div></div>
+    </div><p class="note" style="margin:8px 0 0">${paieStatut(id) === 'payee' ? '✓ ' : '📅 '}${paieTxt(id)}</p></div>
     <p class="sec">${rel < 0 ? 'Bilan' : "Ce qu'il reste à faire"}</p>
     <div class="card">${bes.map((b) => `<div class="need"><span class="ic ${b.ok ? 'ok' : 'todo'}">${b.ok ? '✓' : '!'}</span><div>${b.h}<small>${b.s}</small></div></div>`).join('') || '<div class="empty">Rien à signaler.</div>'}</div>
     <div class="card">${lrow(`data-admin-mois="non" data-per-f="${esc(id)}"`, 'Signés à administrer', `<b style="color:${nAdmT ? 'var(--warn-t)' : 'inherit'}">${nAdmT}</b>`)}</div>
@@ -1176,6 +1189,11 @@ function renderPrimes() {
       <span class="lab">Mon variable depuis avril</span>
       <div class="big">${fE.format(comTot + D.primesTotal)}</div>
       <div class="meta">Commissions finales ${fE.format(comTot)} + primes ${fE.format(D.primesTotal)}</div>
+    </div>
+    <div class="card">
+      <h2 class="h2">Calendrier de paie des primes</h2>
+      <p class="note" style="margin:4px 0 8px">Primes MTE, achat, points et MRM, payées sur le salaire de fin du mois qui suit le trimestre.</p>
+      <div class="plist">${ORDRE_T.map((id) => { const t = D.trim.find((x) => x.trimestre === id) || {}, st = paieStatut(id); return `<div class="row"><span><b>${id}</b> <span class="meta" style="display:inline">· ${PER_T[id]}</span><br><small style="color:${st === 'payee' ? 'var(--ok-t)' : st === 'ce-mois' ? 'var(--warn-t)' : 'var(--ink3)'}">${st === 'payee' ? '✓ Payée' : st === 'ce-mois' ? 'Payée ce mois-ci' : 'À venir'} · fin ${PAIE_T[id].toLowerCase()}${id === 'T4' ? ' (exercice suivant)' : ''}</small></span><b>${fE.format(t.primes || 0)}</b></div>`; }).join('')}</div>
     </div>
     <div class="card">
       <h2 class="h2">Variable par mois</h2>
