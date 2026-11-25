@@ -674,10 +674,6 @@ function paieStatut(id) {
   return n > p ? 'payee' : n === p ? 'ce-mois' : 'a-venir';
 }
 const paieTxt = (id) => { const st = paieStatut(id), m = PAIE_T[id].toLowerCase(); return st === 'payee' ? `Payée fin ${m}` : st === 'ce-mois' ? `Payée fin ${m} (ce mois-ci)` : `Payée sur le salaire de fin ${m}`; };
-function prochainePaie() {
-  const id = ORDRE_T.find((t) => paieStatut(t) !== 'payee') || 'T4';
-  return {id, t: D.trim.find((x) => x.trimestre === id) || {}};
-}
 const navHtml = (key, label, prevOk, nextOk) => `<div class="pnav"><button data-pnav="${key}" data-d="-1" aria-label="Précédent" ${prevOk ? '' : 'disabled'}>‹</button><h2>${label}</h2><button data-pnav="${key}" data-d="1" aria-label="Suivant" ${nextOk ? '' : 'disabled'}>›</button></div>`;
 const lrow = (attrs, label, val) => `<div class="lrow" ${attrs} role="button" tabindex="0"><span>${label}</span><span>${val || ''} <span class="chev">›</span></span></div>`;
 function renderResume() { renderMois(); renderTri(); renderAnnee(); renderAnalyse(); if (S.tab === 'annee') drawChart(); }
@@ -693,7 +689,7 @@ function renderMois() {
   el.innerHTML = `
     ${navHtml('mois', esc(m) + (m === nowMois ? ' <small style="font-size:13px;color:var(--ink3);font-weight:400">· en cours</small>' : ''), i > 0, i < MOIS.length - 1)}
     ${clo}
-    ${(() => { const q = prochainePaie(); const enCours = q.id === TRI[nowMois]; return `<div class="card">${lrow(`data-goto="primes"`, `📅 <b>Prochaine paie de primes : fin ${esc(PAIE_T[q.id].toLowerCase())}</b><br><small style="color:var(--ink3)">Primes du ${q.id}${enCours ? ' (trimestre en cours, montant provisoire)' : ''}</small>`, `<b>${fE.format(q.t.primes || 0)}</b>`)}</div>`; })()}
+    ${(() => { const q = ORDRE_T.find((x) => x !== 'T4' && PAIE_T[x] === m); if (!q) return ''; const t = D.trim.find((x) => x.trimestre === q) || {}; const st = paieStatut(q), triFini = MOIS.indexOf(nowMois) > MOIS.indexOf(MOIS.filter((x) => TRI[x] === q).pop()); return `<div class="card" style="border:2px solid var(--c-jaune)">${lrow(`data-goto="primes"`, `💶 <b>${st === 'payee' ? 'Reçu' : st === 'ce-mois' ? 'Sur ta paie' : 'À recevoir'} fin ${esc(m.toLowerCase())} : primes du ${q}</b><br><small style="color:var(--ink3)">MTE, achat, points et MRM · ${PER_T[q]}${triFini ? '' : ' · montant provisoire'}</small>`, `<b>${fE.format(t.primes || 0)}</b>`)}</div>`; })()}
     <p class="sec">Où j'en suis</p>
     <div class="card"><div class="mini">
       ${miniRow('MTE signée', mr.mt, mr.obj_mt, 'mt', 'm-mt')}
